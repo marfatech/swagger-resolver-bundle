@@ -1,4 +1,6 @@
 ## [Unreleased]
+
+## [0.4.11]
 ### Changed
 - Updated `name` from `wakeapp/swagger-resolver-bundle` to `marfatech/swagger-resolver-bundle`.
 - Updated `php` with pattern version `~7.4||~8.0`.
