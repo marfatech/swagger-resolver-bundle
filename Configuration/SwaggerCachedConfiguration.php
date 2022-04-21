@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/*
+ * This file is part of the SwaggerResolverBundle package.
+ *
+ * (c) Viktor Linkin <adrenalinkin@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Linkin\Bundle\SwaggerResolverBundle\Configuration;
 
 use EXSyst\Component\Swagger\Path;
@@ -15,12 +24,16 @@ use Symfony\Component\Config\ConfigCacheInterface;
 use Symfony\Component\Config\Resource\FileResource;
 use Symfony\Component\HttpKernel\CacheWarmer\WarmableInterface;
 use Symfony\Contracts\Cache\ItemInterface;
+
 use function json_decode;
 use function json_encode;
 use function md5;
 use function sprintf;
 use const PHP_SAPI;
 
+/**
+ * @author Viktor Linkin <adrenalinkin@gmail.com>
+ */
 class SwaggerCachedConfiguration extends SwaggerConfiguration implements WarmableInterface
 {
     private const CACHE_KEY = 'linkin_swagger_resolver';
