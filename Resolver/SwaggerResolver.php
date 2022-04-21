@@ -49,7 +49,7 @@ class SwaggerResolver extends OptionsResolver
     /**
      * {@inheritdoc}
      */
-    public function clear(): self
+    public function clear(): static
     {
          parent::clear();
 
@@ -61,7 +61,7 @@ class SwaggerResolver extends OptionsResolver
     /**
      * {@inheritdoc}
      */
-    public function offsetGet($option, bool $triggerDeprecation = true)
+    public function offsetGet($option, bool $triggerDeprecation = true): mixed
     {
         $resolvedValue = parent::offsetGet($option, $triggerDeprecation);
         $property = $this->schema->getProperties()->get($option);
