@@ -92,3 +92,11 @@ services:
     Linkin\Bundle\SwaggerResolverBundle\Validator\StringPatternValidator:
         tags:
             - { name: linkin_swagger_resolver.validator }
+
+    Linkin\Bundle\SwaggerResolverBundle\ModelDescriber\ObjectModelDescriber:
+       arguments:
+           - '@property_info'
+           - '@annotation_reader'
+           - !tagged { tag: nelmio_api_doc.object_model.property_describer }
+       tags:
+           - { name: nelmio_api_doc.model_describer, priority: 250 }

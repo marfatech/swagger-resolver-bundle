@@ -1,4 +1,9 @@
 ## [Unreleased]
+### Added
+- Accept and read swagger extension `x-nullable`.
+### Changed
+- Required field can be with `null` value.
+- Remove support of `symfony/*` with version `~3.4`.
 
 ## [0.4.11]
 ### Changed

@@ -14,8 +14,10 @@ declare(strict_types=1);
 namespace Linkin\Bundle\SwaggerResolverBundle\Builder;
 
 use EXSyst\Component\Swagger\Schema;
+use Linkin\Bundle\SwaggerResolverBundle\Enum\ParameterExtensionEnum;
 use Linkin\Bundle\SwaggerResolverBundle\Enum\ParameterTypeEnum;
 use Linkin\Bundle\SwaggerResolverBundle\Exception\UndefinedPropertyTypeException;
+use Linkin\Bundle\SwaggerResolverBundle\Merger\OperationParameterMerger;
 use Linkin\Bundle\SwaggerResolverBundle\Normalizer\SwaggerNormalizerInterface;
 use Linkin\Bundle\SwaggerResolverBundle\Resolver\SwaggerResolver;
 use Linkin\Bundle\SwaggerResolverBundle\Validator\SwaggerValidatorInterface;
@@ -91,7 +93,9 @@ class SwaggerResolverBuilder
                 throw new UndefinedPropertyTypeException($definitionName, $name, $propertyType);
             }
 
-            if (!$swaggerResolver->isRequired($name)) {
+            $isNullable = $propertySchema->getExtensions()[ParameterExtensionEnum::X_NULLABLE] ??= null;
+
+            if ($isNullable === true) {
                 $allowedTypes[] = 'null';
             }
 
