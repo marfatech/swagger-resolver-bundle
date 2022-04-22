@@ -20,14 +20,12 @@ use Linkin\Bundle\SwaggerResolverBundle\Exception\UndefinedPropertyTypeException
 use Linkin\Bundle\SwaggerResolverBundle\Normalizer\SwaggerNormalizerInterface;
 use Linkin\Bundle\SwaggerResolverBundle\Resolver\SwaggerResolver;
 use Linkin\Bundle\SwaggerResolverBundle\Validator\SwaggerValidatorInterface;
-use MarfaTech\Bundle\EnumerBundle\Registry\EnumRegistryService;
 use Symfony\Component\Validator\Exception\ValidationFailedException;
 use Symfony\Component\Validator\Mapping\ClassMetadata;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 use function in_array;
 use function is_array;
-use function is_string;
 
 /**
  * @author Viktor Linkin <adrenalinkin@gmail.com>
@@ -55,29 +53,21 @@ class SwaggerResolverBuilder
     private $validator;
 
     /**
-     * @var EnumRegistryService|null
-     */
-    private $enumRegistryService;
-
-    /**
      * @param SwaggerValidatorInterface[] $swaggerValidators
      * @param SwaggerNormalizerInterface[] $swaggerNormalizers
      * @param array $normalizationLocations
      * @param ValidatorInterface|null $validator
-     * @param EnumRegistryService|null $enumRegistryService
      */
     public function __construct(
         array $swaggerValidators,
         array $swaggerNormalizers,
         array $normalizationLocations,
-        ?ValidatorInterface $validator = null,
-        ?EnumRegistryService $enumRegistryService = null
+        ?ValidatorInterface $validator = null
     ) {
         $this->normalizationLocations = $normalizationLocations;
         $this->swaggerNormalizers = $swaggerNormalizers;
         $this->swaggerValidators = $swaggerValidators;
         $this->validator = $validator;
-        $this->enumRegistryService = $enumRegistryService;
     }
 
     /**
@@ -130,7 +120,9 @@ class SwaggerResolverBuilder
                 $swaggerResolver->setDefault($name, $propertySchema->getDefault());
             }
 
-            $swaggerResolver = $this->addEnum($swaggerResolver, $name, $propertySchema);
+            if (!empty($propertySchema->getEnum())) {
+                $swaggerResolver->setAllowedValues($name, (array) $propertySchema->getEnum());
+            }
         }
 
         foreach ($this->swaggerValidators as $validator) {
@@ -138,40 +130,6 @@ class SwaggerResolverBuilder
         }
 
         return $swaggerResolver;
-    }
-
-    /**
-     * @param SwaggerResolver $resolver
-     * @param string $name
-     * @param Schema $propertySchema
-     *
-     * @return SwaggerResolver
-     */
-    private function addEnum(SwaggerResolver $resolver, string $name, Schema $propertySchema): SwaggerResolver
-    {
-        $enum = $propertySchema->getEnum();
-
-        if (empty($enum)) {
-            return $resolver;
-        }
-
-        if (is_array($enum)) {
-            $resolver->setAllowedValues($name, $enum);
-
-            return $resolver;
-        }
-
-        if (!$this->enumRegistryService) {
-            return $resolver;
-        }
-
-        if (is_string($enum) && $this->enumRegistryService->hasEnum($enum)) {
-            $enumList = $this->enumRegistryService->getOriginalList($enum);
-
-            $resolver->setAllowedValues($name, $enumList);
-        }
-
-        return $resolver;
     }
 
     /**
