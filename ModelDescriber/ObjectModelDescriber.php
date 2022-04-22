@@ -16,6 +16,7 @@ namespace Linkin\Bundle\SwaggerResolverBundle\ModelDescriber;
 use Doctrine\Common\Annotations\Reader;
 use EXSyst\Component\Swagger\Schema;
 use Linkin\Bundle\SwaggerResolverBundle\Enum\ParameterExtensionEnum;
+use MarfaTech\Bundle\EnumerBundle\Registry\EnumRegistryService;
 use Nelmio\ApiDocBundle\Describer\ModelRegistryAwareTrait;
 use Nelmio\ApiDocBundle\Model\Model;
 use Nelmio\ApiDocBundle\Model\ModelRegistry;
@@ -26,17 +27,24 @@ use Symfony\Component\PropertyInfo\PropertyInfoExtractorInterface;
 use Symfony\Component\PropertyInfo\Type;
 
 use function class_exists;
+use function is_array;
+use function is_string;
 use function sprintf;
 
 class ObjectModelDescriber extends NelmioObjectModelDescriber
 {
     use ModelRegistryAwareTrait;
 
+    private ?EnumRegistryService $enumRegistryService;
+
     public function __construct(
         PropertyInfoExtractorInterface $propertyInfo,
         Reader $reader,
-        iterable $propertyDescriberList
+        iterable $propertyDescriberList,
+        ?EnumRegistryService $enumRegistryService = null
     ) {
+        $this->enumRegistryService = $enumRegistryService;
+
         parent::__construct($propertyInfo, $reader, $propertyDescriberList);
     }
 
@@ -64,19 +72,23 @@ class ObjectModelDescriber extends NelmioObjectModelDescriber
         foreach ($reflectionClass->getProperties() as $reflectionProperty) {
             $reflectionPropertyType = $reflectionProperty->getType();
             $propertyName = $reflectionProperty->getName();
-            $xNullableExtension[$extensionNullableName] = true;
+            $propertyExtension[$extensionNullableName] = true;
 
             if ($reflectionPropertyType) {
-                $xNullableExtension[$extensionNullableName] = $reflectionPropertyType->allowsNull();
+                $propertyExtension[$extensionNullableName] = $reflectionPropertyType->allowsNull();
             }
 
             if ($schema->getProperties()->has($propertyName)) {
-                $schema->getProperties()->get($propertyName)->merge($xNullableExtension);
+                $property = $schema->getProperties()->get($propertyName);
+
+                $this->addEnum($property);
+
+                $property->merge($propertyExtension);
             }
         }
 
-        $xClassExtension[$extensionClassName] = $class;
-        $schema->merge($xClassExtension);
+        $classExtension[$extensionClassName] = $class;
+        $schema->merge($classExtension);
     }
 
     public function setModelRegistry(ModelRegistry $modelRegistry): void
@@ -84,5 +96,28 @@ class ObjectModelDescriber extends NelmioObjectModelDescriber
         $this->modelRegistry = $modelRegistry;
 
         parent::setModelRegistry($modelRegistry);
+    }
+
+    private function addEnum(Schema $propertySchema): void
+    {
+        $enum = $propertySchema->getEnum();
+
+        if (empty($enum)) {
+            return;
+        }
+
+        if (is_array($enum)) {
+            return;
+        }
+
+        if (!$this->enumRegistryService) {
+            return;
+        }
+
+        if (is_string($enum) && $this->enumRegistryService->hasEnum($enum)) {
+            $enumList = $this->enumRegistryService->getOriginalList($enum);
+
+            $propertySchema->setEnum($enumList);
+        }
     }
 }

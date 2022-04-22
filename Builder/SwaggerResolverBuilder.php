@@ -214,11 +214,11 @@ class SwaggerResolverBuilder
                     ->getViolations()
                 ;
 
-                if ($violations->count() === 0) {
-                    return $value;
+                if ($violations->count() > 0) {
+                    throw new ValidationFailedException($value, $violations);
                 }
 
-                throw new ValidationFailedException($value, $violations);
+                return true;
             });
         }
 
