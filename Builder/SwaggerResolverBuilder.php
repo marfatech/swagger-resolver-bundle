@@ -17,13 +17,17 @@ use EXSyst\Component\Swagger\Schema;
 use Linkin\Bundle\SwaggerResolverBundle\Enum\ParameterExtensionEnum;
 use Linkin\Bundle\SwaggerResolverBundle\Enum\ParameterTypeEnum;
 use Linkin\Bundle\SwaggerResolverBundle\Exception\UndefinedPropertyTypeException;
-use Linkin\Bundle\SwaggerResolverBundle\Merger\OperationParameterMerger;
 use Linkin\Bundle\SwaggerResolverBundle\Normalizer\SwaggerNormalizerInterface;
 use Linkin\Bundle\SwaggerResolverBundle\Resolver\SwaggerResolver;
 use Linkin\Bundle\SwaggerResolverBundle\Validator\SwaggerValidatorInterface;
+use MarfaTech\Bundle\EnumerBundle\Registry\EnumRegistryService;
+use Symfony\Component\Validator\Exception\ValidationFailedException;
+use Symfony\Component\Validator\Mapping\ClassMetadata;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 use function in_array;
 use function is_array;
+use function is_string;
 
 /**
  * @author Viktor Linkin <adrenalinkin@gmail.com>
@@ -46,15 +50,34 @@ class SwaggerResolverBuilder
     private $swaggerValidators;
 
     /**
+     * @var ValidatorInterface|null
+     */
+    private $validator;
+
+    /**
+     * @var EnumRegistryService|null
+     */
+    private $enumRegistryService;
+
+    /**
      * @param SwaggerValidatorInterface[] $swaggerValidators
      * @param SwaggerNormalizerInterface[] $swaggerNormalizers
      * @param array $normalizationLocations
+     * @param ValidatorInterface|null $validator
+     * @param EnumRegistryService|null $enumRegistryService
      */
-    public function __construct(array $swaggerValidators, array $swaggerNormalizers, array $normalizationLocations)
-    {
+    public function __construct(
+        array $swaggerValidators,
+        array $swaggerNormalizers,
+        array $normalizationLocations,
+        ?ValidatorInterface $validator = null,
+        ?EnumRegistryService $enumRegistryService = null
+    ) {
         $this->normalizationLocations = $normalizationLocations;
         $this->swaggerNormalizers = $swaggerNormalizers;
         $this->swaggerValidators = $swaggerValidators;
+        $this->validator = $validator;
+        $this->enumRegistryService = $enumRegistryService;
     }
 
     /**
@@ -101,14 +124,13 @@ class SwaggerResolverBuilder
 
             $swaggerResolver->setAllowedTypes($name, $allowedTypes);
             $swaggerResolver = $this->addNormalization($swaggerResolver, $name, $propertySchema);
+            $swaggerResolver = $this->addConstraint($swaggerResolver, $name, $definition);
 
             if (null !== $propertySchema->getDefault()) {
                 $swaggerResolver->setDefault($name, $propertySchema->getDefault());
             }
 
-            if (!empty($propertySchema->getEnum())) {
-                $swaggerResolver->setAllowedValues($name, (array) $propertySchema->getEnum());
-            }
+            $swaggerResolver = $this->addEnum($swaggerResolver, $name, $propertySchema);
         }
 
         foreach ($this->swaggerValidators as $validator) {
@@ -116,6 +138,91 @@ class SwaggerResolverBuilder
         }
 
         return $swaggerResolver;
+    }
+
+    /**
+     * @param SwaggerResolver $resolver
+     * @param string $name
+     * @param Schema $propertySchema
+     *
+     * @return SwaggerResolver
+     */
+    private function addEnum(SwaggerResolver $resolver, string $name, Schema $propertySchema): SwaggerResolver
+    {
+        $enum = $propertySchema->getEnum();
+
+        if (empty($enum)) {
+            return $resolver;
+        }
+
+        if (is_array($enum)) {
+            $resolver->setAllowedValues($name, $enum);
+
+            return $resolver;
+        }
+
+        if (!$this->enumRegistryService) {
+            return $resolver;
+        }
+
+        if (is_string($enum) && $this->enumRegistryService->hasEnum($enum)) {
+            $enumList = $this->enumRegistryService->getOriginalList($enum);
+
+            $resolver->setAllowedValues($name, $enumList);
+        }
+
+        return $resolver;
+    }
+
+    /**
+     * @param SwaggerResolver $resolver
+     * @param string $name
+     * @param Schema $definition
+     *
+     * @return SwaggerResolver
+     */
+    private function addConstraint(SwaggerResolver $resolver, string $name, Schema $definition): SwaggerResolver
+    {
+        if (!$this->validator) {
+            return $resolver;
+        }
+
+        $definitionClass = $definition->getExtensions()[ParameterExtensionEnum::X_CLASS] ?? null;
+
+        if (!$definitionClass) {
+            return $resolver;
+        }
+
+        if (!$this->validator->hasMetadataFor($definitionClass)) {
+            return $resolver;
+        }
+
+        /** @var ClassMetadata $definitionMetadata */
+        $definitionMetadata = $this->validator->getMetadataFor($definitionClass);
+        $propertyMetadataList = $definitionMetadata->getPropertyMetadata($name);
+
+        foreach ($propertyMetadataList as $propertyMetadata) {
+            if (!$propertyMetadata->getConstraints()) {
+                continue;
+            }
+
+            $resolver->addAllowedValues($name, function ($value) use ($definitionClass, $name) {
+                $violations = $this->validator
+                    ->startContext()
+                    ->atPath($name)
+                    ->validatePropertyValue($definitionClass, $name, $value)
+                    ->getViolations()
+                ;
+
+                if ($violations->count() === 0) {
+                    return $value;
+                }
+
+                throw new ValidationFailedException($value, $violations);
+            });
+        }
+
+        return $resolver;
     }
 
     /**

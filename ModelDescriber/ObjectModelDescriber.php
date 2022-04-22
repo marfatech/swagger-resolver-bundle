@@ -58,21 +58,25 @@ class ObjectModelDescriber extends NelmioObjectModelDescriber
         $class = $model->getType()->getClassName();
         $reflectionClass = new ReflectionClass($class);
 
-        $extensionName = sprintf('x-%s', ParameterExtensionEnum::X_NULLABLE);
+        $extensionNullableName = sprintf('x-%s', ParameterExtensionEnum::X_NULLABLE);
+        $extensionClassName = sprintf('x-%s', ParameterExtensionEnum::X_CLASS);
 
         foreach ($reflectionClass->getProperties() as $reflectionProperty) {
             $reflectionPropertyType = $reflectionProperty->getType();
             $propertyName = $reflectionProperty->getName();
-            $xNullableExtension[$extensionName] = true;
+            $xNullableExtension[$extensionNullableName] = true;
 
             if ($reflectionPropertyType) {
-                $xNullableExtension[$extensionName] = $reflectionPropertyType->allowsNull();
+                $xNullableExtension[$extensionNullableName] = $reflectionPropertyType->allowsNull();
             }
 
             if ($schema->getProperties()->has($propertyName)) {
                 $schema->getProperties()->get($propertyName)->merge($xNullableExtension);
             }
         }
+
+        $xClassExtension[$extensionClassName] = $class;
+        $schema->merge($xClassExtension);
     }
 
     public function setModelRegistry(ModelRegistry $modelRegistry): void

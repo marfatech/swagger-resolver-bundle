@@ -16,4 +16,5 @@ namespace Linkin\Bundle\SwaggerResolverBundle\Enum;
 class ParameterExtensionEnum
 {
     public const X_NULLABLE = 'nullable';
+    public const X_CLASS = 'class';
 }

@@ -4,6 +4,8 @@ services:
             - [] # validators
             - [] # normalizers
             - '%linkin_swagger_resolver.enable_normalization%'
+            - '@?validator'
+            - '@?marfa_tech_enumer.enum_registry'
 
     Linkin\Bundle\SwaggerResolverBundle\CacheWarmer\SwaggerConfigurationCacheWarmer:
         arguments:
