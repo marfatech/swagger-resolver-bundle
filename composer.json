@@ -47,5 +47,8 @@
         "psr-4": {
             "Linkin\\Bundle\\SwaggerResolverBundle\\": ""
         }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^7.0 || ^8.0 || ^9.0"
     }
 }

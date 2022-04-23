@@ -20,11 +20,10 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 
 use function get_class;
 
-
+/**
+ * @author Viktor Linkin <adrenalinkin@gmail.com>
+ */
 if (Kernel::MAJOR_VERSION >= 6) {
-    /**
-     * @author Viktor Linkin <adrenalinkin@gmail.com>
-     */
     class SwaggerResolver extends OptionsResolver
     {
         /**
@@ -39,7 +38,7 @@ if (Kernel::MAJOR_VERSION >= 6) {
          *
          * @var SwaggerValidatorInterface[]
          */
-        private $validators;
+        private $validators = [];
 
         /**
          * @param Schema $schema
@@ -109,9 +108,7 @@ if (Kernel::MAJOR_VERSION >= 6) {
         }
     }
 } else {
-    /**
-     * @author Viktor Linkin <adrenalinkin@gmail.com>
-     */
+    // BC layer for symfony lower than 6
     class SwaggerResolver extends OptionsResolver
     {
         /**
@@ -126,7 +123,7 @@ if (Kernel::MAJOR_VERSION >= 6) {
          *
          * @var SwaggerValidatorInterface[]
          */
-        private $validators;
+        private $validators = [];
 
         /**
          * @param Schema $schema
