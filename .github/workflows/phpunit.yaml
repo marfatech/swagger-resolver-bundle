@@ -20,7 +20,7 @@ jobs:
           php-version: ${{ matrix.php-versions }}
           tools: composer
 
-      - name: Composer install
+      - name: Composer install and lock options resolver
         run: |
           composer require symfony/options-resolver:${{ matrix.symfony-versions }}
 
