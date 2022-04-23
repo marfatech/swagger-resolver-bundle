@@ -8,6 +8,7 @@ jobs:
     strategy:
       matrix:
         php-versions: ['8.0', '8.1']
+        symfony-versions: ['4.4', '5.4', '6.0']
 
     steps:
       - name: Checkout
@@ -21,7 +22,7 @@ jobs:
 
       - name: Composer install
         run: |
-          composer install
+          composer require symfony/options-resolver:${{ matrix.symfony-versions }}
 
       - name: Run tests
         run: |
