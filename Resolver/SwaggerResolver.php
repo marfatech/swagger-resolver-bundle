@@ -15,7 +15,6 @@ namespace Linkin\Bundle\SwaggerResolverBundle\Resolver;
 
 use EXSyst\Component\Swagger\Schema;
 use Linkin\Bundle\SwaggerResolverBundle\Validator\SwaggerValidatorInterface;
-use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 use function get_class;
@@ -23,173 +22,86 @@ use function get_class;
 /**
  * @author Viktor Linkin <adrenalinkin@gmail.com>
  */
-if (Kernel::MAJOR_VERSION >= 6) {
-    class SwaggerResolver extends OptionsResolver
+class SwaggerResolver extends OptionsResolver
+{
+    /**
+     * Definition schema
+     *
+     * @var Schema
+     */
+    private $schema;
+
+    /**
+     * A list of validators.
+     *
+     * @var SwaggerValidatorInterface[]
+     */
+    private $validators = [];
+
+    /**
+     * @param Schema $schema
+     */
+    public function __construct(Schema $schema)
     {
-        /**
-         * Definition schema
-         *
-         * @var Schema
-         */
-        private $schema;
-
-        /**
-         * A list of validators.
-         *
-         * @var SwaggerValidatorInterface[]
-         */
-        private $validators = [];
-
-        /**
-         * @param Schema $schema
-         */
-        public function __construct(Schema $schema)
-        {
-            $this->schema = $schema;
-        }
-
-        /**
-         * {@inheritdoc}
-         */
-        public function clear(): static
-        {
-            parent::clear();
-
-            $this->validators = [];
-
-            return $this;
-        }
-
-        /**
-         * {@inheritdoc}
-         */
-        public function offsetGet($option, bool $triggerDeprecation = true): mixed
-        {
-            $resolvedValue = parent::offsetGet($option, $triggerDeprecation);
-            $property = $this->schema->getProperties()->get($option);
-
-            foreach ($this->validators as $validator) {
-                if ($validator->supports($property)) {
-                    $validator->validate($property, $option, $resolvedValue);
-                }
-            }
-
-            return $resolvedValue;
-        }
-
-        /**
-         * Adds property validator
-         *
-         * @param SwaggerValidatorInterface $validator
-         *
-         * @return self
-         */
-        public function addValidator(SwaggerValidatorInterface $validator): self
-        {
-            $className = get_class($validator);
-
-            $this->validators[$className] = $validator;
-
-            return $this;
-        }
-
-        /**
-         * Removes property validator
-         *
-         * @param string $className
-         *
-         * @return self
-         */
-        public function removeValidator(string $className): self
-        {
-            unset($this->validators[$className]);
-
-            return $this;
-        }
+        $this->schema = $schema;
     }
-} else {
-    // BC layer for symfony lower than 6
-    class SwaggerResolver extends OptionsResolver
+
+    /**
+     * {@inheritdoc}
+     */
+    public function clear(): static
     {
-        /**
-         * Definition schema
-         *
-         * @var Schema
-         */
-        private $schema;
+        parent::clear();
 
-        /**
-         * A list of validators.
-         *
-         * @var SwaggerValidatorInterface[]
-         */
-        private $validators = [];
+        $this->validators = [];
 
-        /**
-         * @param Schema $schema
-         */
-        public function __construct(Schema $schema)
-        {
-            $this->schema = $schema;
-        }
+        return $this;
+    }
 
-        /**
-         * {@inheritdoc}
-         */
-        public function clear(): self
-        {
-            parent::clear();
+    /**
+     * {@inheritdoc}
+     */
+    public function offsetGet($option, bool $triggerDeprecation = true): mixed
+    {
+        $resolvedValue = parent::offsetGet($option, $triggerDeprecation);
+        $property = $this->schema->getProperties()->get($option);
 
-            $this->validators = [];
-
-            return $this;
-        }
-
-        /**
-         * {@inheritdoc}
-         */
-        public function offsetGet($option, bool $triggerDeprecation = true)
-        {
-            $resolvedValue = parent::offsetGet($option, $triggerDeprecation);
-            $property = $this->schema->getProperties()->get($option);
-
-            foreach ($this->validators as $validator) {
-                if ($validator->supports($property)) {
-                    $validator->validate($property, $option, $resolvedValue);
-                }
+        foreach ($this->validators as $validator) {
+            if ($validator->supports($property)) {
+                $validator->validate($property, $option, $resolvedValue);
             }
-
-            return $resolvedValue;
         }
 
-        /**
-         * Adds property validator
-         *
-         * @param SwaggerValidatorInterface $validator
-         *
-         * @return self
-         */
-        public function addValidator(SwaggerValidatorInterface $validator): self
-        {
-            $className = get_class($validator);
+        return $resolvedValue;
+    }
 
-            $this->validators[$className] = $validator;
+    /**
+     * Adds property validator
+     *
+     * @param SwaggerValidatorInterface $validator
+     *
+     * @return self
+     */
+    public function addValidator(SwaggerValidatorInterface $validator): self
+    {
+        $className = get_class($validator);
 
-            return $this;
-        }
+        $this->validators[$className] = $validator;
 
-        /**
-         * Removes property validator
-         *
-         * @param string $className
-         *
-         * @return self
-         */
-        public function removeValidator(string $className): self
-        {
-            unset($this->validators[$className]);
+        return $this;
+    }
 
-            return $this;
-        }
+    /**
+     * Removes property validator
+     *
+     * @param string $className
+     *
+     * @return self
+     */
+    public function removeValidator(string $className): self
+    {
+        unset($this->validators[$className]);
+
+        return $this;
     }
 }

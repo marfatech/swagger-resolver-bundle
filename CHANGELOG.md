@@ -1,8 +1,8 @@
 ## [Unreleased]
 ### Added
-- Support Symfony ~6.0
+- Support Symfony `~6.0`
 ### Removed
-- Removed compatibility with Symfony lower than `6.0`.
+- Removed compatibility with Symfony lower than `4.0`.
 - Removed compatibility with PHP lower than `8.0`.
 
 ## [0.4.11]
