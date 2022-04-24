@@ -106,7 +106,7 @@ class SwaggerResolverBuilder
                 throw new UndefinedPropertyTypeException($definitionName, $name, $propertyType);
             }
 
-            $isNullable = $propertySchema->getExtensions()[ParameterExtensionEnum::X_NULLABLE] ??= null;
+            $isNullable = $propertySchema->getExtensions()[ParameterExtensionEnum::X_NULLABLE] ?? null;
 
             if ($isNullable === true) {
                 $allowedTypes[] = 'null';
