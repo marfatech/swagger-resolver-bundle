@@ -1,8 +1,13 @@
 ## [Unreleased]
 ### Added
+- Accept and read swagger extension `x-nullable`.
+- Accept property annotation constraints.
+- Swagger extension `x-class` has full class name of body model.
+- Accept enum class to swagger enum configuration.
 - Support Symfony `~6.0`
-### Removed
-- Removed compatibility with Symfony lower than `4.0`.
+### Changed
+- Required field can be with `null` value.
+- Remove support of `symfony/*` with version `~3.4`.
 - Removed compatibility with PHP lower than `8.0`.
 
 ## [0.4.11]

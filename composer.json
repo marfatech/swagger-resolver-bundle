@@ -37,18 +37,35 @@
         "symfony/yaml":                 "~4.0||~5.0||~6.0"
     },
 
+    "require-dev": {
+        "nelmio/api-doc-bundle":        "^3.4",
+        "symfony/validator":            "^6.0",
+        "marfatech/enumer-bundle":      "^2.0",
+        "phpunit/phpunit":              "^7.0 || ^8.0 || ^9.0"
+    },
+
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "git@github.com:marfatech/enumer-bundle.git"
+        },
+        {
+            "type": "vcs",
+            "url": "git@github.com:marfatech/enumer.git"
+        }
+    ],
+
     "suggest": {
         "nelmio/api-doc-bundle":    "Generates documentation for your REST API from annotations",
         "symfony/symfony":          "Allows more advanced functionality with full Symfony package",
-        "zircote/swagger-php":      "Allows to generate Swagger configuration by php annotations"
+        "zircote/swagger-php":      "Allows to generate Swagger configuration by php annotations",
+        "marfatech/enumer-bundle":  "Allows to pass enum class to swagger enum configuration",
+        "symfony/validator":        "Allows to use assert constraint validation by php annotations"
     },
 
     "autoload": {
         "psr-4": {
             "Linkin\\Bundle\\SwaggerResolverBundle\\": ""
         }
-    },
-    "require-dev": {
-        "phpunit/phpunit": "^7.0 || ^8.0 || ^9.0"
     }
 }

@@ -49,6 +49,8 @@ class OperationParameterMerger
      */
     public function merge(Operation $swaggerOperation, Definitions $definitions): Schema
     {
+        $extensionList = [];
+
         /** @var Parameter $parameter */
         foreach ($swaggerOperation->getParameters() as $parameter) {
             if ($parameter->getIn() !== ParameterLocationEnum::IN_BODY) {
@@ -72,6 +74,11 @@ class OperationParameterMerger
                 $definitionName = end($explodedName);
 
                 $refDefinition = $definitions->get($definitionName);
+
+                foreach ($refDefinition->getExtensions() as $extensionKey => $extensionValue) {
+                    $extensionList['x-' . $extensionKey] = $extensionValue;
+                }
+
                 $required = $refDefinition->getRequired() ?? [];
                 $required = array_flip($required);
 
@@ -118,7 +125,7 @@ class OperationParameterMerger
             'type' => 'object',
             'properties' => $this->mergeStrategy->getParameters(),
             'required' => $this->mergeStrategy->getRequired(),
-        ]);
+        ] + $extensionList);
 
         $this->mergeStrategy->clean();
 
