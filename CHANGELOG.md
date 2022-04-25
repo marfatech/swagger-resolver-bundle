@@ -8,6 +8,7 @@
 ### Changed
 - Required field can be with `null` value.
 - Remove support of `symfony/*` with version `~3.4`.
+- Updated `symfony/*` with pattern version `~4.4||~5.4||~6.0`.
 - Removed compatibility with PHP lower than `8.0`.
 
 ## [0.4.11]
