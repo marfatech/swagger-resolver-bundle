@@ -28,19 +28,38 @@
         "php":                          "~7.4||~8.0",
         "ext-json":                     "*",
         "exsyst/swagger":               "~0.4",
-        "symfony/config":               "~3.4||~4.0||~5.0",
-        "symfony/dependency-injection": "~3.4||~4.0||~5.0",
-        "symfony/http-foundation":      "~3.4||~4.0||~5.0",
-        "symfony/http-kernel":          "~3.4||~4.0||~5.0",
-        "symfony/options-resolver":     "~3.4||~4.0||~5.0",
-        "symfony/routing":              "~3.4||~4.0||~5.0",
-        "symfony/yaml":                 "~3.4||~4.0||~5.0"
+        "symfony/config":               "~4.0||~5.0",
+        "symfony/dependency-injection": "~4.0||~5.0",
+        "symfony/http-foundation":      "~4.0||~5.0",
+        "symfony/http-kernel":          "~4.0||~5.0",
+        "symfony/options-resolver":     "~4.0||~5.0",
+        "symfony/routing":              "~4.0||~5.0",
+        "symfony/yaml":                 "~4.0||~5.0"
     },
+
+    "require-dev": {
+        "nelmio/api-doc-bundle":        "^3.4",
+        "symfony/validator":            "^6.0",
+        "marfatech/enumer-bundle":      "^2.0"
+    },
+
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "git@github.com:marfatech/enumer-bundle.git"
+        },
+        {
+            "type": "vcs",
+            "url": "git@github.com:marfatech/enumer.git"
+        }
+    ],
 
     "suggest": {
         "nelmio/api-doc-bundle":    "Generates documentation for your REST API from annotations",
         "symfony/symfony":          "Allows more advanced functionality with full Symfony package",
-        "zircote/swagger-php":      "Allows to generate Swagger configuration by php annotations"
+        "zircote/swagger-php":      "Allows to generate Swagger configuration by php annotations",
+        "marfatech/enumer-bundle":  "Allows to pass enum class to swagger enum configuration",
+        "symfony/validator":        "Allows to use assert constraint validation by php annotations"
     },
 
     "autoload": {

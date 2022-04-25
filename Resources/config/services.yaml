@@ -4,6 +4,7 @@ services:
             - [] # validators
             - [] # normalizers
             - '%linkin_swagger_resolver.enable_normalization%'
+            - '@?validator'
 
     Linkin\Bundle\SwaggerResolverBundle\CacheWarmer\SwaggerConfigurationCacheWarmer:
         arguments:
@@ -92,3 +93,12 @@ services:
     Linkin\Bundle\SwaggerResolverBundle\Validator\StringPatternValidator:
         tags:
             - { name: linkin_swagger_resolver.validator }
+
+    Linkin\Bundle\SwaggerResolverBundle\ModelDescriber\ObjectModelDescriber:
+       arguments:
+           - '@property_info'
+           - '@annotation_reader'
+           - !tagged { tag: nelmio_api_doc.object_model.property_describer }
+           - '@?marfa_tech_enumer.enum_registry'
+       tags:
+           - { name: nelmio_api_doc.model_describer, priority: 250 }

@@ -210,6 +210,109 @@ $data = $swaggerResolver->resolve(json_decode($request->getContent(), true));
 класс, реализующий интерфейс [SwaggerNormalizerInterface](./Normalizer/SwaggerNormalizerInterface.php) и
 зарегистрировать его с тегом `linkin_swagger_resolver.normalizer`.
 
+### Симфони валадатор
+
+Бандл предоставляет возможность использовать валидаторы для тела запроса от пакета `symfony/validator`.
+Чтобы применить валидацию к свойству необходимо в аннотацию добавить требуемое ограничение.
+Пример для `NotBlank`, `Email`, `NotCompromisedPassword`, `Length`.
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace Acme\Dto;
+
+use Swagger\Annotations as SWG;
+use Symfony\Component\Validator\Constraints as Assert;
+
+/**
+ * @SWG\Definition(
+ *     type="object",
+ *     description="Entry DTO for create user endpoint",
+ *     required={
+ *         "email",
+ *         "password",
+ *     },
+ * )
+ */
+class UserEntryDto
+{
+    /**
+     * @Assert\NotBlank(message="You should fill email")
+     * @Assert\Email()
+     *
+     * @SWG\Property(
+     *     example="foo@acme.com",
+     * )
+     */
+    private string $email;
+    
+    /**
+     * @Assert\NotCompromisedPassword()
+     * @Assert\Length(min=8, max=24)
+     *
+     * @SWG\Property(
+     *     example="qwerty123",
+     * ) 
+     */
+    private string $password;
+    
+    public  function getEmail(): string
+    {
+        return $this->email;
+    }
+    
+    public  function getPassword(): string
+    {
+        return $this->email;
+    }
+}
+```
+
+### Работа с перечислениями
+
+Бандл предоставляет возможность использовать перечисления для тела запроса от пакета `marfatech/enumer-bundle`.
+Чтобы применить перечисления к свойству необходимо в аннотацию добавить класс со списоком возможных значений.
+Структуру класса перечисления можно найти в документации к [marfatech/enumer-bundle](https://github.com/marfatech/enumer-bundle/blob/master/README.md).
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace Acme\Dto;
+
+use Acme\Enum\UserStatusEnum;
+use Swagger\Annotations as SWG;
+use Symfony\Component\Validator\Constraints as Assert;
+use MarfaTech\Bundle\EnumerBundle\Enum\EnumInterface;
+
+/**
+ * @SWG\Definition(
+ *     type="object",
+ *     description="Entry DTO for change status user endpoint",
+ *     required={
+ *         "status",
+ *     },
+ * )
+ */
+class UserStatusEntryDto
+{
+    /**
+     * @SWG\Property(
+     *     enum=UserStatusEnum::class,
+     *     example=UserStatusEnum::ACTIVE,
+     * )
+     */
+    private string $status;
+    
+    public  function getStatus(): string
+    {
+        return $this->status;
+    }
+}
+```
+
 Лицензия
 --------
 
