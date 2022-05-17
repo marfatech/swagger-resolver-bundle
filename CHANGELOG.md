@@ -1,4 +1,6 @@
 ## [Unreleased]
+
+## [0.5.0] - 2022-05-17
 ### Added
 - Accept and read swagger extension `x-nullable`.
 - Accept property annotation constraints.
