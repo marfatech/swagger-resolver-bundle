@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Linkin\Bundle\SwaggerResolverBundle\Merger\Strategy;
 
 use RuntimeException;
+
 use function sprintf;
 
 /**
@@ -24,13 +25,12 @@ class StrictMergeStrategy extends AbstractMergeStrategy
     /**
      * {@inheritdoc}
      */
-    public function addParameter(string $parameterSource, string $name, array $data, bool $isRequired)
+    public function addParameter(string $parameterSource, string $name, array $data, bool $isRequired): void
     {
         if (isset($this->parameters[$name])) {
-            throw new RuntimeException(sprintf(
-                'Parameter "%s" has duplicate. Rename parameter or use another merger strategy',
-                $name
-            ));
+            $message = sprintf('Parameter "%s" has duplicate. Rename parameter or use another merger strategy', $name);
+
+            throw new RuntimeException($message);
         }
 
         if ($isRequired) {

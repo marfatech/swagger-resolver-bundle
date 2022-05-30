@@ -21,6 +21,10 @@
             "email": "adrenalinkin@gmail.com",
             "name":  "Viktor Linkin",
             "role":  "Developer"
+        },
+        {
+            "name":  "MarfaTech",
+            "homepage":  "https://marfa-tech.com"
         }
     ],
 
@@ -28,13 +32,18 @@
         "php":                          "~7.4||~8.0",
         "ext-json":                     "*",
         "exsyst/swagger":               "~0.4",
-        "symfony/config":               "~4.0||~5.0",
-        "symfony/dependency-injection": "~4.0||~5.0",
-        "symfony/http-foundation":      "~4.0||~5.0",
-        "symfony/http-kernel":          "~4.0||~5.0",
-        "symfony/options-resolver":     "~4.0||~5.0",
-        "symfony/routing":              "~4.0||~5.0",
-        "symfony/yaml":                 "~4.0||~5.0"
+        "symfony/cache-contracts":      "^3.0",
+        "symfony/config":               "~4.4||~5.4",
+        "symfony/dependency-injection": "~4.4||~5.4",
+        "symfony/http-foundation":      "~4.4||~5.4",
+        "symfony/http-kernel":          "~4.4||~5.4",
+        "symfony/options-resolver":     "~4.4||~5.4",
+        "symfony/routing":              "~4.4||~5.4",
+        "symfony/yaml":                 "~4.4||~5.4"
+    },
+
+    "provide": {
+        "symfony/cache-implementation": "3.0"
     },
 
     "require-dev": {
@@ -59,7 +68,8 @@
         "symfony/symfony":          "Allows more advanced functionality with full Symfony package",
         "zircote/swagger-php":      "Allows to generate Swagger configuration by php annotations",
         "marfatech/enumer-bundle":  "Allows to pass enum class to swagger enum configuration",
-        "symfony/validator":        "Allows to use assert constraint validation by php annotations"
+        "symfony/validator":        "Allows to use assert constraint validation by php annotations",
+        "symfony/cache":            "Allows to cache definitions"
     },
 
     "autoload": {

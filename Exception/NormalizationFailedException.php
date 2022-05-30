@@ -22,10 +22,6 @@ use function sprintf;
  */
 class NormalizationFailedException extends InvalidOptionsException
 {
-    /**
-     * @param string $propertyName
-     * @param string $value
-     */
     public function __construct(string $propertyName, string $value)
     {
         parent::__construct(sprintf('Failed to normalize property "%s" with value "%s"', $propertyName, $value));

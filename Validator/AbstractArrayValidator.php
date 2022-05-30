@@ -13,9 +13,9 @@ declare(strict_types=1);
 
 namespace Linkin\Bundle\SwaggerResolverBundle\Validator;
 
-use EXSyst\Component\Swagger\Schema;
 use Linkin\Bundle\SwaggerResolverBundle\Enum\ParameterCollectionFormatEnum;
 use Linkin\Bundle\SwaggerResolverBundle\Enum\ParameterTypeEnum;
+use OpenApi\Annotations\Schema;
 use Symfony\Component\OptionsResolver\Exception\InvalidOptionsException;
 
 use function explode;
@@ -25,14 +25,14 @@ use function sprintf;
 /**
  * @author Viktor Linkin <adrenalinkin@gmail.com>
  */
-abstract class AbstractArrayValidator implements SwaggerValidatorInterface
+abstract class AbstractArrayValidator implements OpenApiValidatorInterface
 {
     /**
      * {@inheritdoc}
      */
     public function supports(Schema $property, array $context = []): bool
     {
-        return ParameterTypeEnum::ARRAY === $property->getType();
+        return $property->type === ParameterTypeEnum::ARRAY;
     }
 
     /**
@@ -40,20 +40,13 @@ abstract class AbstractArrayValidator implements SwaggerValidatorInterface
      */
     abstract public function validate(Schema $property, string $propertyName, $value): void;
 
-    /**
-     * @param string      $propertyName
-     * @param mixed       $value
-     * @param string|null $collectionFormat
-     *
-     * @return array
-     */
     protected function convertValueToArray(string $propertyName, $value, ?string $collectionFormat): array
     {
-        if (null === $value) {
+        if ($value === null) {
             return [];
         }
 
-        if (null === $collectionFormat) {
+        if ($collectionFormat === null) {
             if (is_array($value)) {
                 return $value;
             }
@@ -62,11 +55,9 @@ abstract class AbstractArrayValidator implements SwaggerValidatorInterface
         }
 
         if (is_array($value)) {
-            throw new InvalidOptionsException(sprintf(
-                'Property "%s" should contain valid "%s" string',
-                $propertyName,
-                $collectionFormat
-            ));
+            $message = sprintf('Property "%s" should contain valid "%s" string', $propertyName, $collectionFormat);
+
+            throw new InvalidOptionsException($message);
         }
 
         $delimiter = ParameterCollectionFormatEnum::getDelimiter($collectionFormat);

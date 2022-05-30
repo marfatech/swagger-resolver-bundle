@@ -13,7 +13,8 @@ declare(strict_types=1);
 
 namespace Linkin\Bundle\SwaggerResolverBundle\Validator;
 
-use EXSyst\Component\Swagger\Schema;
+use OpenApi\Annotations\Schema;
+use OpenApi\Generator;
 use Symfony\Component\OptionsResolver\Exception\InvalidOptionsException;
 
 use function count;
@@ -29,7 +30,7 @@ class ArrayMaxItemsValidator extends AbstractArrayValidator
      */
     public function supports(Schema $property, array $context = []): bool
     {
-        return parent::supports($property, $context) && null !== $property->getMaxItems();
+        return parent::supports($property, $context) && !Generator::isDefault($property->maxItems);
     }
 
     /**
@@ -37,14 +38,16 @@ class ArrayMaxItemsValidator extends AbstractArrayValidator
      */
     public function validate(Schema $property, string $propertyName, $value): void
     {
-        $value = $this->convertValueToArray($propertyName, $value, $property->getCollectionFormat());
+        if ($value === null) {
+            return;
+        }
 
-        if (count($value) > $property->getMaxItems()) {
-            throw new InvalidOptionsException(sprintf(
-                'Property "%s" should have %s items or less',
-                $propertyName,
-                $property->getMaxItems()
-            ));
+        $value = $this->convertValueToArray($propertyName, $value, $property->collectionFormat);
+
+        if (count($value) > $property->maxItems) {
+            $message = sprintf('Property "%s" should have %s items or less', $propertyName, $property->maxItems);
+
+            throw new InvalidOptionsException($message);
         }
     }
 }

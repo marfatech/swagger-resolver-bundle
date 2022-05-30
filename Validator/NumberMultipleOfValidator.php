@@ -13,8 +13,9 @@ declare(strict_types=1);
 
 namespace Linkin\Bundle\SwaggerResolverBundle\Validator;
 
-use EXSyst\Component\Swagger\Schema;
 use Linkin\Bundle\SwaggerResolverBundle\Enum\ParameterTypeEnum;
+use OpenApi\Annotations\Schema;
+use OpenApi\Generator;
 use Symfony\Component\OptionsResolver\Exception\InvalidOptionsException;
 
 use function in_array;
@@ -24,16 +25,16 @@ use function sprintf;
 /**
  * @author Viktor Linkin <adrenalinkin@gmail.com>
  */
-class NumberMultipleOfValidator implements SwaggerValidatorInterface
+class NumberMultipleOfValidator implements OpenApiValidatorInterface
 {
     /**
      * {@inheritdoc}
      */
     public function supports(Schema $property, array $context = []): bool
     {
-        return in_array($property->getType(), [ParameterTypeEnum::NUMBER, ParameterTypeEnum::INTEGER], true)
-            && null !== $property->getMultipleOf()
-        ;
+        $isNumericType = in_array($property->type, [ParameterTypeEnum::NUMBER, ParameterTypeEnum::INTEGER], true);
+
+        return $isNumericType && !Generator::isDefault($property->multipleOf);
     }
 
     /**
@@ -41,14 +42,20 @@ class NumberMultipleOfValidator implements SwaggerValidatorInterface
      */
     public function validate(Schema $property, string $propertyName, $value): void
     {
-        $divisionResult = $value / $property->getMultipleOf();
+        if ($value === null) {
+            return;
+        }
+
+        $divisionResult = $value / $property->multipleOf;
 
         if (!is_int($divisionResult)) {
-            throw new InvalidOptionsException(sprintf(
+            $message = sprintf(
                 'Property "%s" should be an integer after division by %s',
                 $propertyName,
-                $property->getMultipleOf()
-            ));
+                $property->multipleOf
+            );
+
+            throw new InvalidOptionsException($message);
         }
     }
 }

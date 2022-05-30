@@ -13,8 +13,9 @@ declare(strict_types=1);
 
 namespace Linkin\Bundle\SwaggerResolverBundle\Validator;
 
-use EXSyst\Component\Swagger\Schema;
 use Linkin\Bundle\SwaggerResolverBundle\Enum\ParameterTypeEnum;
+use OpenApi\Annotations\Schema;
+use OpenApi\Generator;
 use Symfony\Component\OptionsResolver\Exception\InvalidOptionsException;
 
 use function in_array;
@@ -23,16 +24,16 @@ use function sprintf;
 /**
  * @author Viktor Linkin <adrenalinkin@gmail.com>
  */
-class NumberMinimumValidator implements SwaggerValidatorInterface
+class NumberMinimumValidator implements OpenApiValidatorInterface
 {
     /**
      * {@inheritdoc}
      */
     public function supports(Schema $property, array $context = []): bool
     {
-        return in_array($property->getType(), [ParameterTypeEnum::NUMBER, ParameterTypeEnum::INTEGER], true)
-            && null !== $property->getMinimum()
-        ;
+        $isNumericType = in_array($property->type, [ParameterTypeEnum::NUMBER, ParameterTypeEnum::INTEGER], true);
+
+        return $isNumericType && !Generator::isDefault($property->minimum);
     }
 
     /**
@@ -40,15 +41,23 @@ class NumberMinimumValidator implements SwaggerValidatorInterface
      */
     public function validate(Schema $property, string $propertyName, $value): void
     {
-        $message = sprintf('Property "%s" value should be', $propertyName);
-        $minimum = $property->getMinimum();
-
-        if ($property->isExclusiveMinimum() && $value <= $minimum) {
-            throw new InvalidOptionsException(sprintf('%s strictly greater than %s', $message, $minimum));
+        if ($value === null) {
+            return;
         }
 
-        if (!$property->isExclusiveMinimum() && $value < $minimum) {
-            throw new InvalidOptionsException(sprintf('%s greater than or equal to %s', $message, $minimum));
+        $message = sprintf('Property "%s" value should be', $propertyName);
+        $minimum = $property->minimum;
+
+        if ($property->exclusiveMinimum === true && $value <= $minimum) {
+            $message = sprintf('%s strictly greater than %s', $message, $minimum);
+
+            throw new InvalidOptionsException($message);
+        }
+
+        if ($property->exclusiveMinimum === false && $value < $minimum) {
+            $message = sprintf('%s greater than or equal to %s', $message, $minimum);
+
+            throw new InvalidOptionsException($message);
         }
     }
 }

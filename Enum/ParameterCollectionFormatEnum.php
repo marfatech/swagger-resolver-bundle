@@ -36,11 +36,6 @@ class ParameterCollectionFormatEnum
         return [self::CSV, self::SSV, self::TSV, self::PIPES, self::MULTI];
     }
 
-    /**
-     * @param string $collectionFormat
-     *
-     * @return string
-     */
     public static function getDelimiter(string $collectionFormat): string
     {
         switch ($collectionFormat) {

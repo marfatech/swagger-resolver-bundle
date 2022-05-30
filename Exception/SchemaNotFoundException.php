@@ -20,14 +20,10 @@ use function sprintf;
 /**
  * @author Viktor Linkin <adrenalinkin@gmail.com>
  */
-class OperationNotFoundException extends RuntimeException
+class SchemaNotFoundException extends RuntimeException
 {
-    /**
-     * @param string $path
-     * @param string $method
-     */
-    public function __construct(string $path, string $method)
+    public function __construct(string $schemaName)
     {
-        parent::__construct(sprintf('Swagger operation for path "%s" with "%s" was not found', $path, $method));
+        parent::__construct(sprintf('Open API schema "%s" was not found', $schemaName));
     }
 }

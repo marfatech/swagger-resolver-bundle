@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace Linkin\Bundle\SwaggerResolverBundle\Validator;
 
-use EXSyst\Component\Swagger\Schema;
+use OpenApi\Annotations\Schema;
 use Symfony\Component\OptionsResolver\Exception\InvalidOptionsException;
 
 use function array_unique;
@@ -30,7 +30,7 @@ class ArrayUniqueItemsValidator extends AbstractArrayValidator
      */
     public function supports(Schema $property, array $context = []): bool
     {
-        return parent::supports($property, $context) && true === $property->hasUniqueItems();
+        return parent::supports($property, $context) && $property->uniqueItems === true;
     }
 
     /**
@@ -38,12 +38,18 @@ class ArrayUniqueItemsValidator extends AbstractArrayValidator
      */
     public function validate(Schema $property, string $propertyName, $value): void
     {
-        $value = $this->convertValueToArray($propertyName, $value, $property->getCollectionFormat());
+        if ($value === null) {
+            return;
+        }
+
+        $value = $this->convertValueToArray($propertyName, $value, $property->collectionFormat);
 
         $itemsUnique = array_unique($value);
 
         if (count($itemsUnique) !== count($value)) {
-            throw new InvalidOptionsException(sprintf('Property "%s" should contains unique items', $propertyName));
+            $message = sprintf('Property "%s" should contains unique items', $propertyName);
+
+            throw new InvalidOptionsException($message);
         }
     }
 }

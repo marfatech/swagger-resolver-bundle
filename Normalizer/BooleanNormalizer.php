@@ -14,22 +14,22 @@ declare(strict_types=1);
 namespace Linkin\Bundle\SwaggerResolverBundle\Normalizer;
 
 use Closure;
-use EXSyst\Component\Swagger\Schema;
 use Linkin\Bundle\SwaggerResolverBundle\Enum\ParameterTypeEnum;
 use Linkin\Bundle\SwaggerResolverBundle\Exception\NormalizationFailedException;
+use OpenApi\Annotations\Schema;
 use Symfony\Component\OptionsResolver\Options;
 
 /**
  * @author Viktor Linkin <adrenalinkin@gmail.com>
  */
-class BooleanNormalizer implements SwaggerNormalizerInterface
+class BooleanNormalizer implements OpenApiNormalizerInterface
 {
     /**
      * {@inheritdoc}
      */
     public function supports(Schema $propertySchema, string $propertyName, bool $isRequired, array $context = []): bool
     {
-        return $propertySchema->getType() === ParameterTypeEnum::BOOLEAN;
+        return $propertySchema->type === ParameterTypeEnum::BOOLEAN;
     }
 
     /**
@@ -37,7 +37,7 @@ class BooleanNormalizer implements SwaggerNormalizerInterface
      */
     public function getNormalizer(Schema $propertySchema, string $propertyName, bool $isRequired): Closure
     {
-        return function (Options $options, $value) use ($isRequired, $propertyName) {
+        return static function (Options $options, $value) use ($isRequired, $propertyName) {
             if ($value === 'true' || $value === '1' || $value === 1 || $value === true) {
                 return true;
             }

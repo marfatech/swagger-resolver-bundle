@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace Linkin\Bundle\SwaggerResolverBundle\Validator;
 
 use DateTime;
-use Exception;
+use InvalidArgumentException;
 
 /**
  * @author Viktor Linkin <adrenalinkin@gmail.com>
@@ -32,7 +32,7 @@ class FormatTimestampValidator extends AbstractFormatDateValidator
             return $date;
         }
 
-        throw new Exception('Invalid timestamp value');
+        throw new InvalidArgumentException('Invalid timestamp value');
     }
 
     /**

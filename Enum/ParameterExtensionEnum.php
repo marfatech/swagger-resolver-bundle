@@ -13,8 +13,11 @@ declare(strict_types=1);
 
 namespace Linkin\Bundle\SwaggerResolverBundle\Enum;
 
+/**
+ * @author MarfaTech <https://marfa-tech.com>
+ */
 class ParameterExtensionEnum
 {
-    public const X_NULLABLE = 'nullable';
+    public const X_PARAMETER_LOCATION = 'parameter_location';
     public const X_CLASS = 'class';
 }
