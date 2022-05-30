@@ -61,7 +61,7 @@ class OpenApiResolverFactory
     /**
      * @throws Exception
      */
-    public function createForDefinition(string $schemaName): OptionsResolver
+    public function createForSchema(string $schemaName): OptionsResolver
     {
         $explodedName = explode('\\', $schemaName);
         $name = end($explodedName);
