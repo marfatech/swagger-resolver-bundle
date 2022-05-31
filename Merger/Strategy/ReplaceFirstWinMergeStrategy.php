@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace Linkin\Bundle\SwaggerResolverBundle\Merger\Strategy;
 
+use OpenApi\Annotations\Property;
+
 /**
  * @author Viktor Linkin <adrenalinkin@gmail.com>
  */
@@ -21,16 +23,18 @@ class ReplaceFirstWinMergeStrategy extends AbstractMergeStrategy
     /**
      * {@inheritdoc}
      */
-    public function addParameter(string $parameterSource, string $name, array $data, bool $isRequired): void
+    public function addParameter(string $parameterSource, Property $property): void
     {
+        $name = $property->property;
+
         if (isset($this->parameters[$name])) {
             return;
         }
 
-        if ($isRequired) {
+        if ($property->required === true) {
             $this->required[$name] = $name;
         }
 
-        $this->parameters[$name] = $data;
+        $this->parameters[$name] = $property;
     }
 }

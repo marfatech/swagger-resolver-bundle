@@ -92,7 +92,8 @@ class ObjectModelDescriber extends NelmioObjectModelDescriber
         foreach ($propertyList as $propertyName) {
             $reflectionProperty = $reflectionClass->getProperty($propertyName);
             $property = Util::getProperty($schema, $propertyName);
-            $docBlockProperty = $this->docBlockFactory->create($reflectionProperty);
+            $docComment = $reflectionProperty->getDocComment();
+            $docBlockProperty = $docComment ? $this->docBlockFactory->create($docComment) : null;
 
             $this->addDefault($property, $reflectionProperty);
             $this->addNullable($property, $reflectionProperty, $docBlockProperty);
@@ -117,7 +118,7 @@ class ObjectModelDescriber extends NelmioObjectModelDescriber
     private function addNullable(
         Property $property,
         ReflectionProperty $reflectionProperty,
-        DocBlock $docBlockProperty
+        ?DocBlock $docBlockProperty
     ): void {
         if (!Generator::isDefault($property->nullable)) {
             return;
@@ -128,6 +129,10 @@ class ObjectModelDescriber extends NelmioObjectModelDescriber
         if ($reflectionPropertyType) {
             $property->nullable = $reflectionPropertyType->allowsNull();
 
+            return;
+        }
+
+        if (!$docBlockProperty) {
             return;
         }
 
@@ -185,14 +190,16 @@ class ObjectModelDescriber extends NelmioObjectModelDescriber
     private function addDeprecated(
         Property $property,
         ReflectionProperty $reflectionProperty,
-        DocBlock $docBlockProperty
+        ?DocBlock $docBlockProperty
     ): void {
         if (!Generator::isDefault($property->deprecated)) {
             return;
         }
 
-        if ($docBlockProperty->hasTag('deprecated')) {
+        if ($docBlockProperty && $docBlockProperty->hasTag('deprecated')) {
             $property->deprecated = true;
+
+            return;
         }
 
         if (PHP_VERSION_ID >= 80000) {

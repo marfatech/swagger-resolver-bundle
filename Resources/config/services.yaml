@@ -44,6 +44,7 @@ services:
         class: Linkin\Bundle\SwaggerResolverBundle\Merger\OperationParameterMerger
         arguments:
             - '@linkin_swagger_resolver.merge_strategy'
+            - '@linkin_swagger_resolver.serializer'
 
     linkin_swagger_resolver.model_describers.object:
         class: Linkin\Bundle\SwaggerResolverBundle\Describer\ObjectModelDescriber

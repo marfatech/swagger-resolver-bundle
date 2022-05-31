@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace Linkin\Bundle\SwaggerResolverBundle\Merger;
 
-use OpenApi\Attributes\Property;
+use OpenApi\Annotations\Property;
 
 /**
  * @author Viktor Linkin <adrenalinkin@gmail.com>
@@ -23,7 +23,7 @@ interface MergeStrategyInterface
     /**
      * Add parameter into collection
      */
-    public function addParameter(string $parameterSource, string $name, array $data, bool $isRequired);
+    public function addParameter(string $parameterSource, Property $property);
 
     /**
      * Returns list of collected parameters

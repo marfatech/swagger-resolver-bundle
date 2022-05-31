@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace Linkin\Bundle\SwaggerResolverBundle\Merger\Strategy;
 
 use Linkin\Bundle\SwaggerResolverBundle\Merger\MergeStrategyInterface;
-use OpenApi\Attributes\Property;
+use OpenApi\Annotations\Property;
 
 /**
  * @author Viktor Linkin <adrenalinkin@gmail.com>
@@ -34,7 +34,7 @@ abstract class AbstractMergeStrategy implements MergeStrategyInterface
     /**
      * {@inheritdoc}
      */
-    abstract public function addParameter(string $parameterSource, string $name, array $data, bool $isRequired);
+    abstract public function addParameter(string $parameterSource, Property $property);
 
     /**
      * {@inheritdoc}
