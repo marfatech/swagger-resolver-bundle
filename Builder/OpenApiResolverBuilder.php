@@ -13,22 +13,34 @@ declare(strict_types=1);
 
 namespace Linkin\Bundle\SwaggerResolverBundle\Builder;
 
+use Composer\InstalledVersions;
 use Exception;
 use IteratorAggregate;
+use JsonException;
+use Linkin\Bundle\SwaggerResolverBundle\Configuration\OpenApiConfigurationInterface;
 use Linkin\Bundle\SwaggerResolverBundle\Enum\ParameterExtensionEnum;
-use Linkin\Bundle\SwaggerResolverBundle\Enum\ParameterTypeEnum;
-use Linkin\Bundle\SwaggerResolverBundle\Exception\UndefinedPropertyTypeException;
+use Linkin\Bundle\SwaggerResolverBundle\Matcher\ParameterTypeMatcher;
 use Linkin\Bundle\SwaggerResolverBundle\Normalizer\OpenApiNormalizerInterface;
 use Linkin\Bundle\SwaggerResolverBundle\Validator\OpenApiValidatorInterface;
 use OpenApi\Annotations\Property;
 use OpenApi\Annotations\Schema;
 use OpenApi\Generator;
+use OpenApi\Serializer;
+use Symfony\Component\OptionsResolver\Options;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Exception\ValidationFailedException;
 use Symfony\Component\Validator\Mapping\ClassMetadata;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
+use function array_filter;
+use function array_values;
+use function class_exists;
+use function implode;
 use function in_array;
+use function is_array;
+use function json_encode;
+
+use const JSON_THROW_ON_ERROR;
 
 /**
  * @author Viktor Linkin <adrenalinkin@gmail.com>
@@ -47,32 +59,43 @@ class OpenApiResolverBuilder
 
     private array $normalizationLocations;
     private ?ValidatorInterface $validator;
+    private ParameterTypeMatcher $parameterTypeMatcher;
+    private OpenApiConfigurationInterface $openApiConfiguration;
+    private Serializer $serializer;
 
     /**
      * @param array<int, OpenApiValidatorInterface>|IteratorAggregate
      * @param array<int, OpenApiNormalizerInterface>|IteratorAggregate
      * @param array $normalizationLocations
+     * @param OpenApiConfigurationInterface $openApiConfiguration
+     * @param ParameterTypeMatcher $parameterTypeMatcher
+     * @param Serializer $serializer
      * @param ValidatorInterface|null $validator
      */
     public function __construct(
         IteratorAggregate $openApiNormalizers,
         IteratorAggregate $openApiValidators,
         array $normalizationLocations,
+        OpenApiConfigurationInterface $openApiConfiguration,
+        ParameterTypeMatcher $parameterTypeMatcher,
+        Serializer $serializer,
         ?ValidatorInterface $validator = null
     ) {
         $this->openApiNormalizers = $openApiNormalizers;
         $this->openApiValidators = $openApiValidators;
         $this->normalizationLocations = $normalizationLocations;
+        $this->openApiConfiguration = $openApiConfiguration;
+        $this->parameterTypeMatcher = $parameterTypeMatcher;
+        $this->serializer = $serializer;
         $this->validator = $validator;
     }
 
     /**
-     * @throws UndefinedPropertyTypeException
      * @throws Exception
      */
-    public function build(Schema $schema): OptionsResolver
+    public function build(Schema $schema, ?OptionsResolver $optionsResolver = null): OptionsResolver
     {
-        $optionsResolver = new OptionsResolver();
+        $optionsResolver = $optionsResolver ?: new OptionsResolver();
 
         $requiredProperties = Generator::isDefault($schema->required) ? [] : (array) $schema->required;
 
@@ -84,60 +107,180 @@ class OpenApiResolverBuilder
             return $optionsResolver;
         }
 
-        foreach ($schema->properties as $propertySchema) {
-            $name = $propertySchema->property;
+        foreach ($schema->properties as $property) {
+            $extensionPropertyList = Generator::isDefault($property->x) ? [] : $property->x;
+            $optionResolve = $extensionPropertyList[ParameterExtensionEnum::X_OPTION_RESOLVE] ?? true;
+
+            if ($optionResolve === false) {
+                continue;
+            }
+
+            $name = $property->property;
 
             $optionsResolver->setDefined($name);
-
-            $allowedTypes = $this->getAllowedTypes($propertySchema);
-
-            if ($allowedTypes === null) {
-                $propertyType = $propertySchema->type ?? '';
-
-                throw new UndefinedPropertyTypeException($schema->schema, $name, $propertyType);
-            }
-
-            $isNullable = $propertySchema->nullable;
-
-            if ($isNullable === true) {
-                $allowedTypes[] = 'null';
-            }
-
-            $optionsResolver->setAllowedTypes($name, $allowedTypes);
-
-            $optionsResolver = $this->addNormalization($optionsResolver, $name, $propertySchema);
-            $optionsResolver = $this->addValidator($optionsResolver, $name, $propertySchema);
+            $optionsResolver = $this->addDefault($optionsResolver, $name, $property);
+            $optionsResolver = $this->addNestedResolver($optionsResolver, $name, $property);
+            $optionsResolver = $this->addItemNestedResolver($optionsResolver, $name, $property);
+            $optionsResolver = $this->addType($optionsResolver, $name, $property);
+            $optionsResolver = $this->addNormalization($optionsResolver, $name, $property);
+            $optionsResolver = $this->addValidator($optionsResolver, $name, $property);
             $optionsResolver = $this->addConstraint($optionsResolver, $name, $schema);
 
-            if (!Generator::isDefault($propertySchema->default)) {
-                $optionsResolver->setDefault($name, $propertySchema->default);
+            if (!Generator::isDefault($property->enum)) {
+                $optionsResolver->setAllowedValues($name, (array) $property->enum);
             }
 
-            if (!Generator::isDefault($propertySchema->enum)) {
-                $optionsResolver->setAllowedValues($name, (array) $propertySchema->enum);
+            $info = [
+                !Generator::isDefault($property->title) ? $property->title : '',
+                !Generator::isDefault($property->description) ? $property->description : '',
+            ];
+
+            if (array_filter($info)) {
+                $optionsResolver->setInfo($name, implode(' ', $info));
+            }
+
+            if (!Generator::isDefault($property->deprecated)) {
+                $rootPackage = InstalledVersions::getRootPackage();
+
+                $optionsResolver->setDeprecated($name, $rootPackage['name'], $rootPackage['version']);
             }
         }
 
         return $optionsResolver;
     }
 
-    private function addNormalization(OptionsResolver $resolver, string $name, Schema $propertySchema): OptionsResolver
+    private function addDefault(OptionsResolver $resolver, string $name, Property $property): OptionsResolver
     {
-        $extSchemaList = Generator::isDefault($propertySchema->x) ? [] : $propertySchema->x;
-        $parameterLocation = $extSchemaList[ParameterExtensionEnum::X_PARAMETER_LOCATION] ?? null;
+        if (Generator::isDefault($property->default)) {
+            return $resolver;
+        }
+
+        $resolver->setDefault($name, $property->default);
+
+        return $resolver;
+    }
+
+    /**
+     * @throws JsonException
+     * @throws Exception
+     */
+    private function addItemNestedResolver(OptionsResolver $resolver, string $name, Property $property): OptionsResolver
+    {
+        if (Generator::isDefault($property->items)) {
+            return $resolver;
+        }
+
+        if (!Generator::isDefault($property->items->ref)) {
+            $schema = $this->openApiConfiguration->getSchema($property->items->ref);
+            $extensionReferenceSchemaExist = !Generator::isDefault($schema->x);
+            $referenceClassSchemaExist = class_exists($schema->x[ParameterExtensionEnum::X_CLASS]);
+
+            if ($extensionReferenceSchemaExist && $referenceClassSchemaExist) {
+                $schemaClassName = $schema->x[ParameterExtensionEnum::X_CLASS];
+
+                $resolver->addNormalizer($name, static function (Options $options, $value) use ($schemaClassName) {
+                    $resultList = [];
+
+                    foreach ($value as $key => $item) {
+                        $resultList[$key] = is_array($value) ? new $schemaClassName($value) : $value;
+                    }
+
+                    return $resultList;
+                });
+            }
+        } elseif ($property->items->type === 'object') {
+            $schemaJson = json_encode(['properties' => $property->items->properties], JSON_THROW_ON_ERROR);
+            $schema = $this->serializer->deserialize($schemaJson, Schema::class);
+        } else {
+            return $resolver;
+        }
+
+        $resolver->setDefault($name, function (OptionsResolver $nestedResolver) use ($schema) {
+            $nestedResolver->setPrototype(true);
+
+            $this->build($schema, $nestedResolver);
+        });
+
+        return $resolver;
+    }
+
+    private function addNestedResolver(OptionsResolver $resolver, string $name, Property $property): OptionsResolver
+    {
+        if ($property->type !== 'object' && Generator::isDefault($property->ref)) {
+            return $resolver;
+        }
+
+        if (!Generator::isDefault($property->ref)) {
+            $schema = $this->openApiConfiguration->getSchema($property->ref);
+            $extensionReferenceSchemaExist = !Generator::isDefault($schema->x);
+            $referenceClassSchemaExist = class_exists($schema->x[ParameterExtensionEnum::X_CLASS]);
+
+            if ($extensionReferenceSchemaExist && $referenceClassSchemaExist) {
+                $schemaClassName = $schema->x[ParameterExtensionEnum::X_CLASS];
+
+                $resolver->addNormalizer($name, static function (Options $options, $value) use ($schemaClassName) {
+                    return is_array($value) ? new $schemaClassName($value) : $value;
+                });
+            }
+        } else {
+            $schema = $property;
+        }
+
+        $resolver->setDefault($name, function (OptionsResolver $nestedResolver) use ($schema) {
+            $this->build($schema, $nestedResolver);
+        });
+
+        return $resolver;
+    }
+
+    private function addType(OptionsResolver $resolver, string $name, Property $property): OptionsResolver
+    {
+        $isItemsSchema = !Generator::isDefault($property->items);
+
+        if ($isItemsSchema && $property->items->type !== 'object' && !Generator::isDefault($property->items->type)) {
+            $type = $property->items->type === 'number' ? 'float' : $property->items->type;
+
+            $resolver->addAllowedTypes($name, $type . '[]');
+
+            return $resolver;
+        }
+
+        $allowedTypes = [];
+
+        $this->parameterTypeMatcher->matchTypes($property, $allowedTypes);
+
+        if (!Generator::isDefault($property->oneOf)) {
+            foreach ($property->oneOf as $schema) {
+                $this->parameterTypeMatcher->matchTypes($schema, $allowedTypes);
+            }
+        }
+
+        if ($property->nullable === true) {
+            $allowedTypes['null'] = 'null';
+        }
+
+        if ($allowedTypes) {
+            $resolver->setAllowedTypes($name, array_values($allowedTypes));
+        }
+
+        return $resolver;
+    }
+
+    private function addNormalization(OptionsResolver $resolver, string $name, Property $property): OptionsResolver
+    {
+        $extensionPropertyList = Generator::isDefault($property->x) ? [] : $property->x;
+        $parameterLocation = $extensionPropertyList[ParameterExtensionEnum::X_PARAMETER_LOCATION] ?? null;
 
         if (!in_array($parameterLocation, $this->normalizationLocations, true)) {
             return $resolver;
         }
 
-        $isRequired = $resolver->isRequired($name);
-
         foreach ($this->openApiNormalizers as $normalizer) {
-            if (!$normalizer->supports($propertySchema, $name, $isRequired)) {
+            if (!$normalizer->supports($property)) {
                 continue;
             }
 
-            $closure = $normalizer->getNormalizer($propertySchema, $name, $isRequired);
+            $closure = $normalizer->getNormalizer($property);
 
             return $resolver
                 ->setNormalizer($name, $closure)
@@ -148,15 +291,15 @@ class OpenApiResolverBuilder
         return $resolver;
     }
 
-    private function addValidator(OptionsResolver $resolver, string $name, Schema $propertySchema): OptionsResolver
+    private function addValidator(OptionsResolver $resolver, string $name, Property $property): OptionsResolver
     {
         foreach ($this->openApiValidators as $openApiValidator) {
-            if (!$openApiValidator->supports($propertySchema)) {
+            if (!$openApiValidator->supports($property)) {
                 continue;
             }
 
-            $resolver->addAllowedValues($name, function ($value) use ($openApiValidator, $propertySchema, $name) {
-                $openApiValidator->validate($propertySchema, $name, $value);
+            $resolver->addAllowedValues($name, function ($value) use ($openApiValidator, $property) {
+                $openApiValidator->validate($property, $value);
 
                 return true;
             });
@@ -208,63 +351,5 @@ class OpenApiResolverBuilder
         }
 
         return $resolver;
-    }
-
-    private function getAllowedTypes(Property $propertySchema): ?array
-    {
-        $propertyType = $propertySchema->type;
-        $allowedTypes = [];
-
-        if ($propertyType === ParameterTypeEnum::STRING) {
-            $allowedTypes[] = 'string';
-
-            return $allowedTypes;
-        }
-
-        if ($propertyType === ParameterTypeEnum::INTEGER) {
-            $allowedTypes[] = 'integer';
-            $allowedTypes[] = 'int';
-
-            return $allowedTypes;
-        }
-
-        if ($propertyType === ParameterTypeEnum::BOOLEAN) {
-            $allowedTypes[] = 'boolean';
-            $allowedTypes[] = 'bool';
-
-            return $allowedTypes;
-        }
-
-        if ($propertyType === ParameterTypeEnum::NUMBER) {
-            $allowedTypes[] = 'double';
-            $allowedTypes[] = 'float';
-
-            return $allowedTypes;
-        }
-
-        if ($propertyType === ParameterTypeEnum::ARRAY) {
-            $allowedTypes[] = Generator::isDefault($propertySchema->collectionFormat) ? 'array' : 'string';
-
-            return $allowedTypes;
-        }
-
-        if ($propertyType === 'object') {
-            $allowedTypes[] = 'object';
-            $allowedTypes[] = 'array';
-
-            return $allowedTypes;
-        }
-
-        if (Generator::isDefault($propertyType) && !Generator::isDefault($propertySchema->ref)) {
-            $ref = $propertySchema->ref;
-
-            $allowedTypes[] = 'object';
-            $allowedTypes[] = 'array';
-            $allowedTypes[] = $ref;
-
-            return $allowedTypes;
-        }
-
-        return null;
     }
 }

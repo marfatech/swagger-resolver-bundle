@@ -19,6 +19,7 @@ use IteratorAggregate;
 use Linkin\Bundle\SwaggerResolverBundle\Exception\LoadConfigurationFailedException;
 use Linkin\Bundle\SwaggerResolverBundle\Exception\SchemaNotFoundException;
 use Linkin\Bundle\SwaggerResolverBundle\Merger\OperationParameterMerger;
+use OpenApi\Annotations\Components;
 use OpenApi\Annotations\OpenApi;
 use OpenApi\Annotations\Operation;
 use OpenApi\Annotations\Schema;
@@ -31,6 +32,7 @@ use Symfony\Component\Routing\RouterInterface;
 use Symfony\Contracts\Cache\CacheInterface;
 
 use function sprintf;
+use function str_replace;
 use function strtoupper;
 
 /**
@@ -102,14 +104,16 @@ class OpenApiConfiguration implements IteratorAggregate, CacheWarmerInterface, O
      */
     public function getSchema(string $needleSchemaName): Schema
     {
-        if ($this->cache) {
-            $cacheKey = sprintf('%s.schema.%s', self::CACHE_KEY, $needleSchemaName);
+        $schemaName = str_replace(Components::SCHEMA_REF, '', $needleSchemaName);
 
-            $serializedSchema = $this->cache->get($cacheKey, function () use ($needleSchemaName) {
-                return $this->serializeSchema($needleSchemaName);
+        if ($this->cache) {
+            $cacheKey = sprintf('%s.schema.%s', self::CACHE_KEY, $schemaName);
+
+            $serializedSchema = $this->cache->get($cacheKey, function () use ($schemaName) {
+                return $this->serializeSchema($schemaName);
             });
         } else {
-            $serializedSchema = $this->serializeSchema($needleSchemaName);
+            $serializedSchema = $this->serializeSchema($schemaName);
         }
 
         return $this->serializer->deserialize($serializedSchema, Schema::class);
@@ -142,6 +146,7 @@ class OpenApiConfiguration implements IteratorAggregate, CacheWarmerInterface, O
      * {@inheritDoc}
      *
      * @throws InvalidArgumentException
+     * @throws Exception
      */
     public function warmUp(string $cacheDir): array
     {
@@ -191,6 +196,9 @@ class OpenApiConfiguration implements IteratorAggregate, CacheWarmerInterface, O
         throw new SchemaNotFoundException($schemaName);
     }
 
+    /**
+     * @throws Exception
+     */
     private function serializeMergedSchema(string $routeName, string $method): string
     {
         $mergedRouteSchemaList = $this->buildMergedRouteSchemaList();
@@ -226,6 +234,8 @@ class OpenApiConfiguration implements IteratorAggregate, CacheWarmerInterface, O
 
     /**
      * @return Schema[][]
+     *
+     * @throws Exception
      */
     private function buildMergedRouteSchemaList(): array
     {

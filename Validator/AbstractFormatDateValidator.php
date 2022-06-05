@@ -15,7 +15,7 @@ namespace Linkin\Bundle\SwaggerResolverBundle\Validator;
 
 use DateTime;
 use Exception;
-use OpenApi\Annotations\Schema;
+use OpenApi\Annotations\Property;
 use Symfony\Component\OptionsResolver\Exception\InvalidOptionsException;
 use Throwable;
 
@@ -30,7 +30,7 @@ abstract class AbstractFormatDateValidator implements OpenApiValidatorInterface
     /**
      * {@inheritdoc}
      */
-    public function supports(Schema $property, array $context = []): bool
+    public function supports(Property $property): bool
     {
         return $property->format === $this->getSupportedFormatName();
     }
@@ -38,11 +38,13 @@ abstract class AbstractFormatDateValidator implements OpenApiValidatorInterface
     /**
      * {@inheritdoc}
      */
-    public function validate(Schema $property, string $propertyName, $value): void
+    public function validate(Property $property, $value): void
     {
         if (empty($value)) {
             return;
         }
+
+        $propertyName = $property->property;
 
         if ($property->pattern === null) {
             $this->validateDatePattern($propertyName, $value);

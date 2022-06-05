@@ -23,7 +23,7 @@ use OpenApi\Annotations\Schema;
 interface OpenApiConfigurationInterface
 {
     /**
-     * Return Open API schema object
+     * Return Open API schema object by reference or schema name
      */
     public function getSchema(string $needleSchemaName): Schema;
 

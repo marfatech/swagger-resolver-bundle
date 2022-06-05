@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace Linkin\Bundle\SwaggerResolverBundle\Validator;
 
-use OpenApi\Annotations\Schema;
+use OpenApi\Annotations\Property;
 
 /**
  * @author Viktor Linkin <adrenalinkin@gmail.com>
@@ -23,10 +23,10 @@ interface OpenApiValidatorInterface
     /**
      * Check is this validator supports received property
      */
-    public function supports(Schema $propertySchema, array $context = []): bool;
+    public function supports(Property $property): bool;
 
     /**
      * Validate received property value according to property schema configuration
      */
-    public function validate(Schema $propertySchema, string $propertyName, $value): void;
+    public function validate(Property $property, $value): void;
 }

@@ -70,11 +70,11 @@ class OperationParameterMerger
             $reference = Generator::isDefault($bodySchema->ref) ? null : $bodySchema->ref;
 
             if ($reference) {
-                $definitionName = str_replace(Components::SCHEMA_REF, '', $reference);
-                $definition = $apiConfiguration->getSchema($definitionName);
+                $schema = $apiConfiguration->getSchema($reference);
+                $schemaName = $schema->schema;
 
-                $propertyList = Generator::isDefault($definition->properties) ? [] : $definition->properties;
-                $extSchemaList += Generator::isDefault($definition->x) ? [] : $definition->x;
+                $propertyList = Generator::isDefault($schema->properties) ? [] : $schema->properties;
+                $extSchemaList += Generator::isDefault($schema->x) ? [] : $schema->x;
 
                 foreach ($propertyList as $property) {
                     $parameterSource = sprintf('%s_%s', $mediaType, ParameterLocationEnum::IN_BODY);
@@ -114,7 +114,7 @@ class OperationParameterMerger
 
         $mergedSchema = new Schema([
             'type' => 'object',
-            'schema' => $definitionName ?? Generator::UNDEFINED,
+            'schema' => $schemaName ?? Generator::UNDEFINED,
             'properties' => $this->mergeStrategy->getParameters(),
             'required' => $this->mergeStrategy->getRequired(),
             'x' => $extSchemaList,

@@ -16,7 +16,7 @@ namespace Linkin\Bundle\SwaggerResolverBundle\Normalizer;
 use Closure;
 use Linkin\Bundle\SwaggerResolverBundle\Enum\ParameterTypeEnum;
 use Linkin\Bundle\SwaggerResolverBundle\Exception\NormalizationFailedException;
-use OpenApi\Annotations\Schema;
+use OpenApi\Annotations\Property;
 use Symfony\Component\OptionsResolver\Options;
 
 use function is_numeric;
@@ -29,23 +29,25 @@ class IntegerNormalizer implements OpenApiNormalizerInterface
     /**
      * {@inheritdoc}
      */
-    public function supports(Schema $propertySchema, string $propertyName, bool $isRequired, array $context = []): bool
+    public function supports(Property $property): bool
     {
-        return $propertySchema->type === ParameterTypeEnum::INTEGER;
+        return $property->type === ParameterTypeEnum::INTEGER;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function getNormalizer(Schema $propertySchema, string $propertyName, bool $isRequired): Closure
+    public function getNormalizer(Property $property): Closure
     {
-        return static function (Options $options, $value) use ($isRequired, $propertyName) {
-            if (is_numeric($value)) {
-                return (int) $value;
+        $propertyName = $property->property;
+
+        return static function (Options $options, $value) use ($propertyName) {
+            if ($value === null) {
+                return null;
             }
 
-            if (!$isRequired && $value === null) {
-                return null;
+            if (is_numeric($value)) {
+                return (int) $value;
             }
 
             throw new NormalizationFailedException($propertyName, (string) $value);

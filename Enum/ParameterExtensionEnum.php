@@ -19,5 +19,6 @@ namespace Linkin\Bundle\SwaggerResolverBundle\Enum;
 class ParameterExtensionEnum
 {
     public const X_PARAMETER_LOCATION = 'parameter_location';
+    public const X_OPTION_RESOLVE = 'option_resolve';
     public const X_CLASS = 'class';
 }

@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace Linkin\Bundle\SwaggerResolverBundle\Validator;
 
 use Linkin\Bundle\SwaggerResolverBundle\Enum\ParameterTypeEnum;
-use OpenApi\Annotations\Schema;
+use OpenApi\Annotations\Property;
 use OpenApi\Generator;
 use Symfony\Component\OptionsResolver\Exception\InvalidOptionsException;
 
@@ -30,7 +30,7 @@ class StringPatternValidator implements OpenApiValidatorInterface
     /**
      * {@inheritdoc}
      */
-    public function supports(Schema $property, array $context = []): bool
+    public function supports(Property $property): bool
     {
         return $property->type === ParameterTypeEnum::STRING && !Generator::isDefault($property->pattern);
     }
@@ -38,11 +38,13 @@ class StringPatternValidator implements OpenApiValidatorInterface
     /**
      * {@inheritdoc}
      */
-    public function validate(Schema $property, string $propertyName, $value): void
+    public function validate(Property $property, $value): void
     {
         if ($value === null) {
             return;
         }
+
+        $propertyName = $property->property;
 
         $pattern = sprintf('/%s/', trim($property->pattern, '/'));
 

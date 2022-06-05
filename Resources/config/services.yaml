@@ -18,6 +18,9 @@ services:
             - !tagged { tag: linkin_swagger_resolver.normalizer }
             - !tagged { tag: linkin_swagger_resolver.validator }
             - '%linkin_swagger_resolver.enable_normalization%'
+            - '@linkin_swagger_resolver.openapi_configuration'
+            - '@linkin_swagger_resolver.parameter_type_matcher'
+            - '@linkin_swagger_resolver.serializer'
             - '@?validator'
 
     linkin_swagger_resolver.openapi_configuration:
@@ -39,6 +42,9 @@ services:
 
     linkin_swagger_resolver.serializer:
         class: OpenApi\Serializer
+
+    linkin_swagger_resolver.parameter_type_matcher:
+        class: Linkin\Bundle\SwaggerResolverBundle\Matcher\ParameterTypeMatcher
 
     linkin_swagger_resolver.operation_parameter_merger:
         class: Linkin\Bundle\SwaggerResolverBundle\Merger\OperationParameterMerger

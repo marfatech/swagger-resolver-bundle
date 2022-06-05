@@ -15,7 +15,7 @@ namespace Linkin\Bundle\SwaggerResolverBundle\Validator;
 
 use Linkin\Bundle\SwaggerResolverBundle\Enum\ParameterCollectionFormatEnum;
 use Linkin\Bundle\SwaggerResolverBundle\Enum\ParameterTypeEnum;
-use OpenApi\Annotations\Schema;
+use OpenApi\Annotations\Property;
 use Symfony\Component\OptionsResolver\Exception\InvalidOptionsException;
 
 use function explode;
@@ -30,7 +30,7 @@ abstract class AbstractArrayValidator implements OpenApiValidatorInterface
     /**
      * {@inheritdoc}
      */
-    public function supports(Schema $property, array $context = []): bool
+    public function supports(Property $property): bool
     {
         return $property->type === ParameterTypeEnum::ARRAY;
     }
@@ -38,7 +38,7 @@ abstract class AbstractArrayValidator implements OpenApiValidatorInterface
     /**
      * {@inheritdoc}
      */
-    abstract public function validate(Schema $property, string $propertyName, $value): void;
+    abstract public function validate(Property $property, $value): void;
 
     protected function convertValueToArray(string $propertyName, $value, ?string $collectionFormat): array
     {

@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace Linkin\Bundle\SwaggerResolverBundle\Validator;
 
-use OpenApi\Annotations\Schema;
+use OpenApi\Annotations\Property;
 use Symfony\Component\OptionsResolver\Exception\InvalidOptionsException;
 
 use function array_unique;
@@ -28,19 +28,21 @@ class ArrayUniqueItemsValidator extends AbstractArrayValidator
     /**
      * {@inheritdoc}
      */
-    public function supports(Schema $property, array $context = []): bool
+    public function supports(Property $property): bool
     {
-        return parent::supports($property, $context) && $property->uniqueItems === true;
+        return parent::supports($property) && $property->uniqueItems === true;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function validate(Schema $property, string $propertyName, $value): void
+    public function validate(Property $property, $value): void
     {
         if ($value === null) {
             return;
         }
+
+        $propertyName = $property->property;
 
         $value = $this->convertValueToArray($propertyName, $value, $property->collectionFormat);
 

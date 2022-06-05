@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace Linkin\Bundle\SwaggerResolverBundle\Normalizer;
 
 use Closure;
-use OpenApi\Annotations\Schema;
+use OpenApi\Annotations\Property;
 
 /**
  * @author Viktor Linkin <adrenalinkin@gmail.com>
@@ -24,10 +24,10 @@ interface OpenApiNormalizerInterface
     /**
      * Check is this normalizer supports received property
      */
-    public function supports(Schema $propertySchema, string $propertyName, bool $isRequired, array $context = []): bool;
+    public function supports(Property $property): bool;
 
     /**
      * Returns closure for normalizing property
      */
-    public function getNormalizer(Schema $propertySchema, string $propertyName, bool $isRequired): Closure;
+    public function getNormalizer(Property $property): Closure;
 }
