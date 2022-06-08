@@ -123,6 +123,8 @@ class OpenApiResolverBuilder
 
             $optionsResolver->setDefined($name);
             $optionsResolver = $this->addDefault($optionsResolver, $name, $property);
+            $optionsResolver = $this->addAllOf($optionsResolver, $name, $property);
+            $optionsResolver = $this->addAnyOf($optionsResolver, $name, $property);
             $optionsResolver = $this->addOneOf($optionsResolver, $name, $property);
             $optionsResolver = $this->addNestedResolver($optionsResolver, $name, $property);
             $optionsResolver = $this->addItemNestedResolver($optionsResolver, $name, $property);
@@ -151,11 +153,6 @@ class OpenApiResolverBuilder
             }
         }
 
-        // oneOf
-        // !!! проверить все опции в schema на предмет интеграции в optionsResolver
-        // !!! валидатор query deepObject and etc
-        // !!! нормалайзер query deepObject and etc
-
         return $optionsResolver;
     }
 
@@ -166,6 +163,118 @@ class OpenApiResolverBuilder
         }
 
         $resolver->setDefault($name, $property->default);
+
+        return $resolver;
+    }
+
+    private function addAllOf(OptionsResolver $resolver, string $name, Property $property): OptionsResolver
+    {
+        if (Generator::isDefault($property->allOf)) {
+            return $resolver;
+        }
+
+        $required = [];
+        $properties = [];
+
+        foreach ($property->allOf as $schema) {
+            if (!Generator::isDefault($schema->ref)) {
+                $schema = $this->openApiConfiguration->getSchema($schema->ref);
+            }
+
+            if (!Generator::isDefault($schema->required)) {
+                $required += $schema->required;
+            }
+
+            if (!Generator::isDefault($schema->properties)) {
+                $properties += $schema->properties;
+            }
+        }
+
+        $schema = new Schema(['required' => $required, 'properties' => $properties]);
+
+        $resolver->setDefault($name, function (OptionsResolver $nestedResolver) use ($schema) {
+            $this->build($schema, $nestedResolver);
+        });
+
+        return $resolver;
+    }
+
+    private function addAnyOf(OptionsResolver $resolver, string $name, Property $property): OptionsResolver
+    {
+        if (Generator::isDefault($property->anyOf)) {
+            return $resolver;
+        }
+
+        $allowedTypes = [];
+
+        foreach ($property->anyOf as $schema) {
+            $this->parameterTypeMatcher->matchTypes($schema, $allowedTypes);
+        }
+
+        if ($allowedTypes) {
+            $resolver->addAllowedTypes($name, array_values($allowedTypes));
+        }
+
+        $resolver->setNormalizer($name, function (Options $options, $value) use ($property, $name) {
+            if (!is_array($value)) {
+                return $value;
+            }
+
+            $compatibilitySchema = null;
+            $compatibilitySchemas = 0;
+
+            foreach ($property->anyOf as $schema) {
+                if (!Generator::isDefault($schema->ref)) {
+                    $schema = $this->openApiConfiguration->getSchema($schema->ref);
+                }
+
+                if (Generator::isDefault($schema->properties)) {
+                    continue;
+                }
+
+                $oneOfItemResolver = $this->build($schema);
+
+                try {
+                    $valueIntersectProperties = array_intersect_key($value, $schema->properties);
+
+                    $oneOfItemResolver->resolve($valueIntersectProperties);
+                } catch (MissingOptionsException) {
+                    continue;
+                } catch (ExceptionInterface) {
+                }
+
+                $compatibilitySchema = $schema;
+                $compatibilitySchemas++;
+            }
+
+            if ($compatibilitySchemas >= 1) {
+                $valueIntersectProperties = array_intersect_key($value, $compatibilitySchema->properties);
+
+                $resolvedValue = $this->build($compatibilitySchema)->resolve($valueIntersectProperties);
+
+                $extensionReferenceSchemaExist = !Generator::isDefault($compatibilitySchema->x);
+                $referenceClassSchemaExist = $extensionReferenceSchemaExist
+                    ? class_exists($compatibilitySchema->x[ParameterExtensionEnum::X_CLASS])
+                    : null
+                ;
+
+                if ($extensionReferenceSchemaExist && $referenceClassSchemaExist) {
+                    $schemaClassName = $compatibilitySchema->x[ParameterExtensionEnum::X_CLASS];
+
+                    return is_array($resolvedValue) ? new $schemaClassName($resolvedValue) : $resolvedValue;
+                }
+
+                return $resolvedValue;
+            }
+
+            if ($compatibilitySchemas === 0) {
+                $message = sprintf('Property "%s" should be compatibility at least one of schemas', $name);
+
+                throw new InvalidOptionsException($message);
+            }
+
+            return $value;
+        });
 
         return $resolver;
     }
