@@ -108,7 +108,7 @@ class ObjectModelDescriber extends NelmioObjectModelDescriber
             return;
         }
 
-        if (PHP_VERSION_ID >= 80000 && $reflectionProperty->hasDefaultValue()) {
+        if (PHP_VERSION_ID >= 80000 && $reflectionProperty->hasType() && $reflectionProperty->hasDefaultValue()) {
             $defaultValue = $reflectionProperty->getDefaultValue();
 
             $property->default = $defaultValue;

@@ -26,6 +26,9 @@ use OpenApi\Annotations\Property;
 use OpenApi\Annotations\Schema;
 use OpenApi\Generator;
 use OpenApi\Serializer;
+use Symfony\Component\OptionsResolver\Exception\ExceptionInterface;
+use Symfony\Component\OptionsResolver\Exception\InvalidOptionsException;
+use Symfony\Component\OptionsResolver\Exception\MissingOptionsException;
 use Symfony\Component\OptionsResolver\Options;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Exception\ValidationFailedException;
@@ -33,6 +36,7 @@ use Symfony\Component\Validator\Mapping\ClassMetadata;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 use function array_filter;
+use function array_intersect_key;
 use function array_values;
 use function class_exists;
 use function implode;
@@ -119,6 +123,7 @@ class OpenApiResolverBuilder
 
             $optionsResolver->setDefined($name);
             $optionsResolver = $this->addDefault($optionsResolver, $name, $property);
+            $optionsResolver = $this->addOneOf($optionsResolver, $name, $property);
             $optionsResolver = $this->addNestedResolver($optionsResolver, $name, $property);
             $optionsResolver = $this->addItemNestedResolver($optionsResolver, $name, $property);
             $optionsResolver = $this->addType($optionsResolver, $name, $property);
@@ -146,6 +151,11 @@ class OpenApiResolverBuilder
             }
         }
 
+        // oneOf
+        // !!! проверить все опции в schema на предмет интеграции в optionsResolver
+        // !!! валидатор query deepObject and etc
+        // !!! нормалайзер query deepObject and etc
+
         return $optionsResolver;
     }
 
@@ -156,6 +166,92 @@ class OpenApiResolverBuilder
         }
 
         $resolver->setDefault($name, $property->default);
+
+        return $resolver;
+    }
+
+    private function addOneOf(OptionsResolver $resolver, string $name, Property $property): OptionsResolver
+    {
+        if (Generator::isDefault($property->oneOf)) {
+            return $resolver;
+        }
+
+        $allowedTypes = [];
+
+        foreach ($property->oneOf as $schema) {
+            $this->parameterTypeMatcher->matchTypes($schema, $allowedTypes);
+        }
+
+        if ($allowedTypes) {
+            $resolver->addAllowedTypes($name, array_values($allowedTypes));
+        }
+
+        $resolver->setNormalizer($name, function (Options $options, $value) use ($property, $name) {
+            if (!is_array($value)) {
+                return $value;
+            }
+
+            $compatibilitySchema = null;
+            $compatibilitySchemas = 0;
+
+            foreach ($property->oneOf as $schema) {
+                if (!Generator::isDefault($schema->ref)) {
+                    $schema = $this->openApiConfiguration->getSchema($schema->ref);
+                }
+
+                if (Generator::isDefault($schema->properties)) {
+                    continue;
+                }
+
+                $oneOfItemResolver = $this->build($schema);
+
+                try {
+                    $valueIntersectProperties = array_intersect_key($value, $schema->properties);
+
+                    $oneOfItemResolver->resolve($valueIntersectProperties);
+                } catch (MissingOptionsException) {
+                    continue;
+                } catch (ExceptionInterface) {
+                }
+
+                $compatibilitySchema = $schema;
+                $compatibilitySchemas++;
+            }
+
+            if ($compatibilitySchemas > 1) {
+                $message = sprintf('Property "%s" should be compatibility only one of schemas', $name);
+
+                throw new InvalidOptionsException($message);
+            }
+
+            if ($compatibilitySchemas === 1) {
+                $valueIntersectProperties = array_intersect_key($value, $compatibilitySchema->properties);
+
+                $resolvedValue = $this->build($compatibilitySchema)->resolve($valueIntersectProperties);
+
+                $extensionReferenceSchemaExist = !Generator::isDefault($compatibilitySchema->x);
+                $referenceClassSchemaExist = $extensionReferenceSchemaExist
+                    ? class_exists($compatibilitySchema->x[ParameterExtensionEnum::X_CLASS])
+                    : null
+                ;
+
+                if ($extensionReferenceSchemaExist && $referenceClassSchemaExist) {
+                    $schemaClassName = $compatibilitySchema->x[ParameterExtensionEnum::X_CLASS];
+
+                    return is_array($resolvedValue) ? new $schemaClassName($resolvedValue) : $resolvedValue;
+                }
+
+                return $resolvedValue;
+            }
+
+            if ($compatibilitySchemas < 1) {
+                $message = sprintf('Property "%s" should be compatibility at least one of schemas', $name);
+
+                throw new InvalidOptionsException($message);
+            }
+
+            return $value;
+        });
 
         return $resolver;
     }
@@ -249,18 +345,12 @@ class OpenApiResolverBuilder
 
         $this->parameterTypeMatcher->matchTypes($property, $allowedTypes);
 
-        if (!Generator::isDefault($property->oneOf)) {
-            foreach ($property->oneOf as $schema) {
-                $this->parameterTypeMatcher->matchTypes($schema, $allowedTypes);
-            }
-        }
-
         if ($property->nullable === true) {
             $allowedTypes['null'] = 'null';
         }
 
         if ($allowedTypes) {
-            $resolver->setAllowedTypes($name, array_values($allowedTypes));
+            $resolver->addAllowedTypes($name, array_values($allowedTypes));
         }
 
         return $resolver;
