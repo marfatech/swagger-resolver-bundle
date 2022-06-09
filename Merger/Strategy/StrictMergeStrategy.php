@@ -26,7 +26,7 @@ class StrictMergeStrategy extends AbstractMergeStrategy
     /**
      * {@inheritdoc}
      */
-    public function addParameter(string $parameterSource, Property $property): void
+    public function addParameter(string $parameterSource, Property $property, bool $required): void
     {
         $name = $property->property;
 
@@ -40,7 +40,7 @@ class StrictMergeStrategy extends AbstractMergeStrategy
             throw new RuntimeException($message);
         }
 
-        if ($property->required === true) {
+        if ($required === true) {
             $this->required[$name] = $name;
         }
 

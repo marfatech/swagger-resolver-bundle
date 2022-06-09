@@ -23,7 +23,7 @@ interface MergeStrategyInterface
     /**
      * Add parameter into collection
      */
-    public function addParameter(string $parameterSource, Property $property);
+    public function addParameter(string $parameterSource, Property $property, bool $required);
 
     /**
      * Returns list of collected parameters

@@ -23,11 +23,11 @@ class ReplaceLastWinMergeStrategy extends AbstractMergeStrategy
     /**
      * {@inheritdoc}
      */
-    public function addParameter(string $parameterSource, Property $property): void
+    public function addParameter(string $parameterSource, Property $property, bool $required): void
     {
         $name = $property->property;
 
-        if ($property->required === true) {
+        if ($required === true) {
             $this->required[$name] = $name;
         }
 

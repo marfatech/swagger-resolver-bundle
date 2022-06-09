@@ -25,11 +25,11 @@ class CombineNameMergeStrategy extends AbstractMergeStrategy
     /**
      * {@inheritdoc}
      */
-    public function addParameter(string $parameterSource, Property $property): void
+    public function addParameter(string $parameterSource, Property $property, bool $required): void
     {
         $name = $parameterSource . self::DELIMITER . $property->property;
 
-        if ($property->required === true) {
+        if ($required === true) {
             $this->required[$name] = $name;
         }
 

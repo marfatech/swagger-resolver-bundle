@@ -34,7 +34,7 @@ abstract class AbstractMergeStrategy implements MergeStrategyInterface
     /**
      * {@inheritdoc}
      */
-    abstract public function addParameter(string $parameterSource, Property $property);
+    abstract public function addParameter(string $parameterSource, Property $property, bool $required);
 
     /**
      * {@inheritdoc}
