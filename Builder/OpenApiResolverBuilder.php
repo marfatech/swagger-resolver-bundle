@@ -129,13 +129,10 @@ class OpenApiResolverBuilder
             $optionsResolver = $this->addNestedResolver($optionsResolver, $name, $property);
             $optionsResolver = $this->addItemNestedResolver($optionsResolver, $name, $property);
             $optionsResolver = $this->addType($optionsResolver, $name, $property);
+            $optionsResolver = $this->addEnum($optionsResolver, $name, $property);
             $optionsResolver = $this->addNormalization($optionsResolver, $name, $property);
             $optionsResolver = $this->addValidator($optionsResolver, $name, $property);
             $optionsResolver = $this->addConstraint($optionsResolver, $name, $schema);
-
-            if (!Generator::isDefault($property->enum)) {
-                $optionsResolver->setAllowedValues($name, (array) $property->enum);
-            }
 
             $info = [
                 !Generator::isDefault($property->title) ? $property->title : '',
@@ -460,6 +457,21 @@ class OpenApiResolverBuilder
 
         if ($allowedTypes) {
             $resolver->addAllowedTypes($name, array_values($allowedTypes));
+        }
+
+        return $resolver;
+    }
+
+    private function addEnum(OptionsResolver $resolver, string $name, Property $property): OptionsResolver
+    {
+        if (Generator::isDefault($property->enum)) {
+            return $resolver;
+        }
+
+        $resolver->addAllowedValues($name, (array) $property->enum);
+
+        if ($property->nullable === true) {
+            $resolver->addAllowedValues($name, null);
         }
 
         return $resolver;
