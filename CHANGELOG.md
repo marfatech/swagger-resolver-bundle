@@ -1,4 +1,6 @@
 ## [Unreleased]
+
+## [0.5.1] - 2022-06-15
 ### Fixed
 - Set `nullable` type if property isn't required.
 - Forward all parent property meta while describe model.
