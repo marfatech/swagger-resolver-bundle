@@ -27,6 +27,7 @@ use Symfony\Component\PropertyInfo\PropertyInfoExtractorInterface;
 use Symfony\Component\PropertyInfo\Type;
 
 use function class_exists;
+use function count;
 use function is_array;
 use function is_string;
 use function sprintf;
@@ -78,13 +79,21 @@ class ObjectModelDescriber extends NelmioObjectModelDescriber
                 $propertyExtension[$extensionNullableName] = $reflectionPropertyType->allowsNull();
             }
 
-            if ($schema->getProperties()->has($propertyName)) {
-                $property = $schema->getProperties()->get($propertyName);
-
-                $this->addEnum($property);
-
-                $property->merge($propertyExtension);
+            if (!$schema->getProperties()->has($propertyName)) {
+                continue;
             }
+
+            $property = $schema->getProperties()->get($propertyName);
+
+            $this->addEnum($property);
+
+            $propertyMeta = $property->toArray();
+
+            if (is_array($propertyMeta) && count($propertyMeta) > 0) {
+                $propertyMeta += $propertyExtension;
+            }
+
+            $property->merge($propertyMeta);
         }
 
         $classExtension[$extensionClassName] = $class;

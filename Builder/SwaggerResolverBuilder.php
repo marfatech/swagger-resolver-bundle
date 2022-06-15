@@ -24,6 +24,7 @@ use Symfony\Component\Validator\Exception\ValidationFailedException;
 use Symfony\Component\Validator\Mapping\ClassMetadata;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
+use function array_unique;
 use function in_array;
 use function is_array;
 
@@ -112,7 +113,11 @@ class SwaggerResolverBuilder
                 $allowedTypes[] = 'null';
             }
 
-            $swaggerResolver->setAllowedTypes($name, $allowedTypes);
+            if (!$swaggerResolver->isRequired($name)) {
+                $allowedTypes[] = 'null';
+            }
+
+            $swaggerResolver->setAllowedTypes($name, array_unique($allowedTypes));
             $swaggerResolver = $this->addNormalization($swaggerResolver, $name, $propertySchema);
             $swaggerResolver = $this->addConstraint($swaggerResolver, $name, $definition);
 
