@@ -13,17 +13,9 @@ declare(strict_types=1);
 
 namespace Linkin\Bundle\SwaggerResolverBundle\DependencyInjection;
 
-use Closure;
 use Linkin\Bundle\SwaggerResolverBundle\Enum\ParameterLocationEnum;
-use Linkin\Bundle\SwaggerResolverBundle\Loader\SwaggerConfigurationLoaderInterface;
-use Linkin\Bundle\SwaggerResolverBundle\Merger\MergeStrategyInterface;
-use Linkin\Bundle\SwaggerResolverBundle\Merger\Strategy\StrictMergeStrategy;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
-use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
-
-use function is_subclass_of;
-use function sprintf;
 
 /**
  * @author Viktor Linkin <adrenalinkin@gmail.com>
@@ -37,12 +29,7 @@ class Configuration implements ConfigurationInterface
     {
         $treeBuilder = new TreeBuilder('linkin_swagger_resolver');
 
-        if (method_exists($treeBuilder, 'getRootNode')) {
-            $rootNode = $treeBuilder->getRootNode();
-        } else {
-            // BC layer for symfony/config 4.1 and older
-            $rootNode = $treeBuilder->root('linkin_swagger_resolver');
-        }
+        $rootNode = $treeBuilder->getRootNode();
 
         $rootNode
             ->children()
@@ -57,67 +44,33 @@ class Configuration implements ConfigurationInterface
                     ])
                 ->end()
                 ->scalarNode('path_merge_strategy')
-                    ->cannotBeEmpty()
-                    ->defaultValue(StrictMergeStrategy::class)
-                    ->validate()
-                        ->always($this->validationForPathMergeStrategy())
+                    ->defaultValue('linkin_swagger_resolver.merge_strategy.strict')
+                ->end()
+                ->arrayNode('configuration_file')
+                    ->useAttributeAsKey('area')
+                    ->arrayPrototype()
+                        ->addDefaultsIfNotSet()
+                        ->children()
+                            ->scalarNode('file')
+                                ->defaultNull()
+                                ->info('Serialized OpenAPI configuration in json/yaml format file.')
+                            ->end()
+                        ->end()
                     ->end()
                 ->end()
-                ->scalarNode('configuration_loader_service')
-                    ->defaultNull()
-                    ->validate()
-                        ->always($this->validationForConfigurationLoader())
-                    ->end()
-                ->end()
-                ->scalarNode('configuration_file')->defaultNull()->end()
-                ->arrayNode('swagger_php')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        ->scalarNode('scan')->defaultNull()->end()
-                        ->scalarNode('exclude')->defaultNull()->end()
+                ->arrayNode('openapi_annotation')
+                    ->useAttributeAsKey('area')
+                    ->arrayPrototype()
+                        ->addDefaultsIfNotSet()
+                        ->children()
+                            ->scalarNode('scan')->defaultValue('%kernel.project_dir%/src')->end()
+                            ->scalarNode('exclude')->defaultValue([])->end()
+                        ->end()
                     ->end()
                 ->end()
             ->end()
         ;
 
         return $treeBuilder;
-    }
-
-    /**
-     * @return Closure
-     */
-    private function validationForConfigurationLoader(): Closure
-    {
-        return function ($className) {
-            if (null === $className) {
-                return $className;
-            }
-
-            if (!is_subclass_of($className, SwaggerConfigurationLoaderInterface::class)) {
-                throw new InvalidConfigurationException(sprintf(
-                    'Parameter "configuration_loader_service" should contain class which implements "%s"',
-                    SwaggerConfigurationLoaderInterface::class
-                ));
-            }
-
-            return $className;
-        };
-    }
-
-    /**
-     * @return Closure
-     */
-    private function validationForPathMergeStrategy(): Closure
-    {
-        return function ($className) {
-            if (!is_subclass_of($className, MergeStrategyInterface::class)) {
-                throw new InvalidConfigurationException(sprintf(
-                    'Parameter "path_merge_strategy" should contain class which implements "%s"',
-                    MergeStrategyInterface::class
-                ));
-            }
-
-            return $className;
-        };
     }
 }

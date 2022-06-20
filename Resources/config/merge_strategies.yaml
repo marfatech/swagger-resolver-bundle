@@ -1,0 +1,12 @@
+services:
+    linkin_swagger_resolver.merge_strategy.combine_name:
+        class: Linkin\Bundle\SwaggerResolverBundle\Merger\Strategy\CombineNameMergeStrategy
+
+    linkin_swagger_resolver.merge_strategy.replace_first_win:
+        class: Linkin\Bundle\SwaggerResolverBundle\Merger\Strategy\ReplaceFirstWinMergeStrategy
+
+    linkin_swagger_resolver.merge_strategy.replace_last_win:
+        class: Linkin\Bundle\SwaggerResolverBundle\Merger\Strategy\ReplaceLastWinMergeStrategy
+
+    linkin_swagger_resolver.merge_strategy.strict:
+        class: Linkin\Bundle\SwaggerResolverBundle\Merger\Strategy\StrictMergeStrategy

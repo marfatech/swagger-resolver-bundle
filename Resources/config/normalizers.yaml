@@ -1,0 +1,15 @@
+services:
+    linkin_swagger_resolver.normalizer.boolean:
+        class: Linkin\Bundle\SwaggerResolverBundle\Normalizer\BooleanNormalizer
+        tags:
+            - { name: linkin_swagger_resolver.normalizer }
+
+    linkin_swagger_resolver.normalizer.integer:
+        class: Linkin\Bundle\SwaggerResolverBundle\Normalizer\IntegerNormalizer
+        tags:
+            - { name: linkin_swagger_resolver.normalizer }
+
+    linkin_swagger_resolver.normalizer.number:
+        class: Linkin\Bundle\SwaggerResolverBundle\Normalizer\NumberNormalizer
+        tags:
+            - { name: linkin_swagger_resolver.normalizer }

@@ -1,104 +1,70 @@
+imports:
+    - { resource: ./validators.yaml }
+    - { resource: ./normalizers.yaml }
+    - { resource: ./merge_strategies.yaml }
+
 services:
-    Linkin\Bundle\SwaggerResolverBundle\Builder\SwaggerResolverBuilder:
+    linkin_swagger_resolver.openapi_resolver_factory:
+        class: Linkin\Bundle\SwaggerResolverBundle\Factory\OpenApiResolverFactory
+        public: true
         arguments:
-            - [] # validators
-            - [] # normalizers
+            - '@linkin_swagger_resolver.openapi_resolver_builder'
+            - '@linkin_swagger_resolver.openapi_configuration'
+            - '@router'
+
+    linkin_swagger_resolver.openapi_resolver_builder:
+        class: Linkin\Bundle\SwaggerResolverBundle\Builder\OpenApiResolverBuilder
+        arguments:
+            - !tagged { tag: linkin_swagger_resolver.normalizer }
+            - !tagged { tag: linkin_swagger_resolver.validator }
             - '%linkin_swagger_resolver.enable_normalization%'
+            - '@linkin_swagger_resolver.openapi_configuration'
+            - '@linkin_swagger_resolver.parameter_type_matcher'
+            - '@linkin_swagger_resolver.serializer'
             - '@?validator'
 
-    Linkin\Bundle\SwaggerResolverBundle\CacheWarmer\SwaggerConfigurationCacheWarmer:
-        arguments:
-            - '@Linkin\Bundle\SwaggerResolverBundle\Configuration\SwaggerConfigurationInterface'
+    linkin_swagger_resolver.openapi_configuration:
+        class: Linkin\Bundle\SwaggerResolverBundle\Configuration\OpenApiConfiguration
+        factory: '@linkin_swagger_resolver.openapi_configuration_factory'
         tags:
             - { name: kernel.cache_warmer }
 
-    Linkin\Bundle\SwaggerResolverBundle\Configuration\SwaggerConfigurationInterface:
-        alias: Linkin\Bundle\SwaggerResolverBundle\Configuration\SwaggerCachedConfiguration
-    Linkin\Bundle\SwaggerResolverBundle\Configuration\SwaggerConfiguration:
+    linkin_swagger_resolver.openapi_configuration_factory:
+        class: Linkin\Bundle\SwaggerResolverBundle\Factory\OpenApiConfigurationFactory
         arguments:
-            - '@Linkin\Bundle\SwaggerResolverBundle\Loader\SwaggerConfigurationLoaderInterface'
-    Linkin\Bundle\SwaggerResolverBundle\Configuration\SwaggerCachedConfiguration:
+            - '@router'
+            - '@linkin_swagger_resolver.operation_parameter_merger'
+            - '%linkin_swagger_resolver.oa_annotation_config%'
+            - '%linkin_swagger_resolver.oa_file_config%'
+            - '@linkin_swagger_resolver.serializer'
+            - '@?linkin_swagger_resolver.cache'
+            - '@?nelmio_api_doc.generator_locator'
+
+    linkin_swagger_resolver.serializer:
+        class: OpenApi\Serializer
+
+    linkin_swagger_resolver.parameter_type_matcher:
+        class: Linkin\Bundle\SwaggerResolverBundle\Matcher\ParameterTypeMatcher
+
+    linkin_swagger_resolver.operation_parameter_merger:
+        class: Linkin\Bundle\SwaggerResolverBundle\Merger\OperationParameterMerger
         arguments:
-            - '@Linkin\Bundle\SwaggerResolverBundle\Loader\SwaggerConfigurationLoaderInterface'
-            - '%kernel.cache_dir%'
-            - '%kernel.debug%'
+            - '@linkin_swagger_resolver.merge_strategy'
+            - '@linkin_swagger_resolver.serializer'
 
-    Linkin\Bundle\SwaggerResolverBundle\Factory\SwaggerResolverFactory:
-        public: true
+    linkin_swagger_resolver.model_describers.object:
+        class: Linkin\Bundle\SwaggerResolverBundle\Describer\ObjectModelDescriber
         arguments:
-            - '@Linkin\Bundle\SwaggerResolverBundle\Builder\SwaggerResolverBuilder'
-            - '@Linkin\Bundle\SwaggerResolverBundle\Configuration\SwaggerConfigurationInterface'
-            - '@Symfony\Component\Routing\RouterInterface'
-    linkin_swagger_resolver.factory:
-        alias: Linkin\Bundle\SwaggerResolverBundle\Factory\SwaggerResolverFactory
+            - '@property_info'
+            - '@annotation_reader'
+            - !tagged { tag: nelmio_api_doc.object_model.property_describer }
+            - '@linkin_swagger_resolver.doc_block'
+            - ~
+            - '@?serializer.name_converter.metadata_aware'
+            - '@?marfa_tech_enumer.enum_registry'
+        tags:
+            - { name: nelmio_api_doc.model_describer, priority: 250 }
 
-    Linkin\Bundle\SwaggerResolverBundle\Merger\OperationParameterMerger:
-        arguments:
-            - '@Linkin\Bundle\SwaggerResolverBundle\Merger\MergeStrategyInterface'
-
-    Linkin\Bundle\SwaggerResolverBundle\Merger\MergeStrategyInterface:
-        alias: '@Linkin\Bundle\SwaggerResolverBundle\Merger\Strategy\StrictMergeStrategy'
-
-    Linkin\Bundle\SwaggerResolverBundle\Merger\Strategy\CombineNameMergeStrategy: ~
-    Linkin\Bundle\SwaggerResolverBundle\Merger\Strategy\ReplaceFirstWinMergeStrategy: ~
-    Linkin\Bundle\SwaggerResolverBundle\Merger\Strategy\ReplaceLastWinMergeStrategy: ~
-    Linkin\Bundle\SwaggerResolverBundle\Merger\Strategy\StrictMergeStrategy: ~
-
-    Linkin\Bundle\SwaggerResolverBundle\Normalizer\BooleanNormalizer:
-        tags:
-            - { name: linkin_swagger_resolver.normalizer }
-    Linkin\Bundle\SwaggerResolverBundle\Normalizer\IntegerNormalizer:
-        tags:
-            - { name: linkin_swagger_resolver.normalizer }
-    Linkin\Bundle\SwaggerResolverBundle\Normalizer\NumberNormalizer:
-        tags:
-            - { name: linkin_swagger_resolver.normalizer }
-
-    Linkin\Bundle\SwaggerResolverBundle\Validator\ArrayMaxItemsValidator:
-        tags:
-            - { name: linkin_swagger_resolver.validator }
-    Linkin\Bundle\SwaggerResolverBundle\Validator\ArrayMinItemsValidator:
-        tags:
-            - { name: linkin_swagger_resolver.validator }
-    Linkin\Bundle\SwaggerResolverBundle\Validator\ArrayUniqueItemsValidator:
-        tags:
-            - { name: linkin_swagger_resolver.validator }
-    Linkin\Bundle\SwaggerResolverBundle\Validator\FormatDateValidator:
-        tags:
-            - { name: linkin_swagger_resolver.validator }
-    Linkin\Bundle\SwaggerResolverBundle\Validator\FormatDateTimeValidator:
-        tags:
-            - { name: linkin_swagger_resolver.validator }
-    Linkin\Bundle\SwaggerResolverBundle\Validator\FormatTimestampValidator:
-        tags:
-            - { name: linkin_swagger_resolver.validator }
-    Linkin\Bundle\SwaggerResolverBundle\Validator\FormatTimeValidator:
-        tags:
-            - { name: linkin_swagger_resolver.validator }
-    Linkin\Bundle\SwaggerResolverBundle\Validator\NumberMaximumValidator:
-        tags:
-            - { name: linkin_swagger_resolver.validator }
-    Linkin\Bundle\SwaggerResolverBundle\Validator\NumberMinimumValidator:
-        tags:
-            - { name: linkin_swagger_resolver.validator }
-    Linkin\Bundle\SwaggerResolverBundle\Validator\NumberMultipleOfValidator:
-        tags:
-            - { name: linkin_swagger_resolver.validator }
-    Linkin\Bundle\SwaggerResolverBundle\Validator\StringMaxLengthValidator:
-        tags:
-            - { name: linkin_swagger_resolver.validator }
-    Linkin\Bundle\SwaggerResolverBundle\Validator\StringMinLengthValidator:
-        tags:
-            - { name: linkin_swagger_resolver.validator }
-    Linkin\Bundle\SwaggerResolverBundle\Validator\StringPatternValidator:
-        tags:
-            - { name: linkin_swagger_resolver.validator }
-
-    Linkin\Bundle\SwaggerResolverBundle\ModelDescriber\ObjectModelDescriber:
-       arguments:
-           - '@property_info'
-           - '@annotation_reader'
-           - !tagged { tag: nelmio_api_doc.object_model.property_describer }
-           - '@?marfa_tech_enumer.enum_registry'
-       tags:
-           - { name: nelmio_api_doc.model_describer, priority: 250 }
+    linkin_swagger_resolver.doc_block:
+        class: phpDocumentor\Reflection\DocBlockFactory
+        factory: [ 'phpDocumentor\Reflection\DocBlockFactory', createInstance ]

@@ -13,8 +13,9 @@ declare(strict_types=1);
 
 namespace Linkin\Bundle\SwaggerResolverBundle\Validator;
 
-use EXSyst\Component\Swagger\Schema;
 use Linkin\Bundle\SwaggerResolverBundle\Enum\ParameterTypeEnum;
+use OpenApi\Annotations\Property;
+use OpenApi\Generator;
 use Symfony\Component\OptionsResolver\Exception\InvalidOptionsException;
 
 use function in_array;
@@ -23,32 +24,42 @@ use function sprintf;
 /**
  * @author Viktor Linkin <adrenalinkin@gmail.com>
  */
-class NumberMaximumValidator implements SwaggerValidatorInterface
+class NumberMaximumValidator implements OpenApiValidatorInterface
 {
     /**
      * {@inheritdoc}
      */
-    public function supports(Schema $property, array $context = []): bool
+    public function supports(Property $property): bool
     {
-        return in_array($property->getType(), [ParameterTypeEnum::NUMBER, ParameterTypeEnum::INTEGER], true)
-            && null !== $property->getMaximum()
-        ;
+        $isNumericType = in_array($property->type, [ParameterTypeEnum::NUMBER, ParameterTypeEnum::INTEGER], true);
+
+        return $isNumericType && !Generator::isDefault($property->maximum);
     }
 
     /**
      * {@inheritdoc}
      */
-    public function validate(Schema $property, string $propertyName, $value): void
+    public function validate(Property $property, $value): void
     {
-        $message = sprintf('Property "%s" value should be', $propertyName);
-        $maximum = $property->getMaximum();
-
-        if ($property->isExclusiveMaximum() && $value >= $maximum) {
-            throw new InvalidOptionsException(sprintf('%s strictly lower than %s', $message, $maximum));
+        if ($value === null) {
+            return;
         }
 
-        if (!$property->isExclusiveMaximum() && $value > $maximum) {
-            throw new InvalidOptionsException(sprintf('%s lower than or equal to %s', $message, $maximum));
+        $propertyName = $property->property;
+
+        $message = sprintf('Property "%s" value should be', $propertyName);
+        $maximum = $property->maximum;
+
+        if ($property->exclusiveMaximum === true && $value >= $maximum) {
+            $message = sprintf('%s strictly lower than %s', $message, $maximum);
+
+            throw new InvalidOptionsException($message);
+        }
+
+        if ($property->exclusiveMaximum === false && $value > $maximum) {
+            $message = sprintf('%s lower than or equal to %s', $message, $maximum);
+
+            throw new InvalidOptionsException($message);
         }
     }
 }

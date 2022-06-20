@@ -14,40 +14,42 @@ declare(strict_types=1);
 namespace Linkin\Bundle\SwaggerResolverBundle\Normalizer;
 
 use Closure;
-use EXSyst\Component\Swagger\Schema;
 use Linkin\Bundle\SwaggerResolverBundle\Enum\ParameterTypeEnum;
 use Linkin\Bundle\SwaggerResolverBundle\Exception\NormalizationFailedException;
+use OpenApi\Annotations\Property;
 use Symfony\Component\OptionsResolver\Options;
 
 /**
  * @author Viktor Linkin <adrenalinkin@gmail.com>
  */
-class BooleanNormalizer implements SwaggerNormalizerInterface
+class BooleanNormalizer implements OpenApiNormalizerInterface
 {
     /**
      * {@inheritdoc}
      */
-    public function supports(Schema $propertySchema, string $propertyName, bool $isRequired, array $context = []): bool
+    public function supports(Property $property): bool
     {
-        return $propertySchema->getType() === ParameterTypeEnum::BOOLEAN;
+        return $property->type === ParameterTypeEnum::BOOLEAN;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function getNormalizer(Schema $propertySchema, string $propertyName, bool $isRequired): Closure
+    public function getNormalizer(Property $property): Closure
     {
-        return function (Options $options, $value) use ($isRequired, $propertyName) {
+        $propertyName = $property->property;
+
+        return static function (Options $options, $value) use ($propertyName) {
+            if ($value === null) {
+                return null;
+            }
+
             if ($value === 'true' || $value === '1' || $value === 1 || $value === true) {
                 return true;
             }
 
             if ($value === 'false' || $value === '0' || $value === 0 || $value === false) {
                 return false;
-            }
-
-            if (!$isRequired && $value === null) {
-                return null;
             }
 
             throw new NormalizationFailedException($propertyName, (string) $value);

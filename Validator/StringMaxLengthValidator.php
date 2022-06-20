@@ -13,8 +13,9 @@ declare(strict_types=1);
 
 namespace Linkin\Bundle\SwaggerResolverBundle\Validator;
 
-use EXSyst\Component\Swagger\Schema;
 use Linkin\Bundle\SwaggerResolverBundle\Enum\ParameterTypeEnum;
+use OpenApi\Annotations\Property;
+use OpenApi\Generator;
 use Symfony\Component\OptionsResolver\Exception\InvalidOptionsException;
 
 use function mb_strlen;
@@ -23,27 +24,31 @@ use function sprintf;
 /**
  * @author Viktor Linkin <adrenalinkin@gmail.com>
  */
-class StringMaxLengthValidator implements SwaggerValidatorInterface
+class StringMaxLengthValidator implements OpenApiValidatorInterface
 {
     /**
      * {@inheritdoc}
      */
-    public function supports(Schema $property, array $context = []): bool
+    public function supports(Property $property): bool
     {
-        return ParameterTypeEnum::STRING === $property->getType() && null !== $property->getMaxLength();
+        return $property->type === ParameterTypeEnum::STRING && !Generator::isDefault($property->maxLength);
     }
 
     /**
      * {@inheritdoc}
      */
-    public function validate(Schema $property, string $propertyName, $value): void
+    public function validate(Property $property, $value): void
     {
-        if (mb_strlen($value) > $property->getMaxLength()) {
-            throw new InvalidOptionsException(sprintf(
-                'Property "%s" should have %s character or less',
-                $propertyName,
-                $property->getMaxLength()
-            ));
+        if ($value === null) {
+            return;
+        }
+
+        $propertyName = $property->property;
+
+        if (mb_strlen($value) > $property->maxLength) {
+            $message = sprintf('Property "%s" should have %s character or less', $propertyName, $property->maxLength);
+
+            throw new InvalidOptionsException($message);
         }
     }
 }
