@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace Linkin\Bundle\SwaggerResolverBundle\Validator;
 
-use EXSyst\Component\Swagger\Schema;
+use OpenApi\Annotations\Property;
 use Symfony\Component\OptionsResolver\Exception\InvalidOptionsException;
 
 use function array_unique;
@@ -28,22 +28,30 @@ class ArrayUniqueItemsValidator extends AbstractArrayValidator
     /**
      * {@inheritdoc}
      */
-    public function supports(Schema $property, array $context = []): bool
+    public function supports(Property $property): bool
     {
-        return parent::supports($property, $context) && true === $property->hasUniqueItems();
+        return parent::supports($property) && $property->uniqueItems === true;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function validate(Schema $property, string $propertyName, $value): void
+    public function validate(Property $property, $value): void
     {
-        $value = $this->convertValueToArray($propertyName, $value, $property->getCollectionFormat());
+        if ($value === null) {
+            return;
+        }
+
+        $propertyName = $property->property;
+
+        $value = $this->convertValueToArray($propertyName, $value, $property->collectionFormat);
 
         $itemsUnique = array_unique($value);
 
         if (count($itemsUnique) !== count($value)) {
-            throw new InvalidOptionsException(sprintf('Property "%s" should contains unique items', $propertyName));
+            $message = sprintf('Property "%s" should contains unique items', $propertyName);
+
+            throw new InvalidOptionsException($message);
         }
     }
 }

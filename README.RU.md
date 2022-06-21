@@ -1,24 +1,22 @@
 Swagger Resolver Bundle [![In English](https://img.shields.io/badge/Switch_To-English-green.svg?style=flat-square)](./README.md)
 =======================
 
-[![Latest Stable Version](https://poser.pugx.org/adrenalinkin/swagger-resolver-bundle/v/stable)](https://packagist.org/packages/adrenalinkin/swagger-resolver-bundle)
-[![Total Downloads](https://poser.pugx.org/adrenalinkin/swagger-resolver-bundle/downloads)](https://packagist.org/packages/adrenalinkin/swagger-resolver-bundle)
+[![Latest Stable Version](https://poser.pugx.org/marfatech/swagger-resolver-bundle/v/stable)](https://packagist.org/packages/marfatech/swagger-resolver-bundle)
+[![Total Downloads](https://poser.pugx.org/marfatech/swagger-resolver-bundle/downloads)](https://packagist.org/packages/marfatech/swagger-resolver-bundle)
 
-[![knpbundles.com](http://knpbundles.com/adrenalinkin/swagger-resolver-bundle/badge-short)](http://knpbundles.com/adrenalinkin/swagger-resolver-bundle)
+[![knpbundles.com](http://knpbundles.com/marfatech/swagger-resolver-bundle/badge-short)](http://knpbundles.com/marfatech/swagger-resolver-bundle)
 
 Введение
 --------
 
-Бандл предоставляет возможность валидировать данные в соответствии с описанной документацией Swagger 2.
-Единожды описав документацию api при помощи swagger вы получаете проверку данных на соответствие описанным требованиям.
-Обновляется документаци - обновляются требования, все в одном месте!
+Бандл предоставляет возможность валидировать данные в соответствии с описанной документацией OpenApi 3.
+Единожды описав документацию api при помощи OpenApi вы получаете проверку данных на соответствие описанным требованиям.
+Обновляется документация - обновляются требования, все в одном месте!
 
-**Документация кэшируется** посредством стандартного механизма `Symfony Warmers`. 
-В режиме отладки кэш автоматически прогревается если изменить файл, содержащий описание документации.
+**Документация кэшируется** посредством стандартного компонента [Symfony Cache](https://symfony.com/doc/current/components/cache.html).
 
-*Примечание:* в качестве ответа приходит объект `SwaggerResolver` расширение для
-[OptionsResolver](https://github.com/symfony/options-resolver). Таким образом вы получаете полный контроль
-над созданным набором требований к данным.
+*Примечание:* в качестве ответа приходит объект [OptionsResolver](https://github.com/symfony/options-resolver).
+Объект содержит в себе созданный набор требований к данным.
 
 *Внимание:* помните что внося изменения в предустановленный набор требований к данным
 вы рискуете получить расхождение с актуальной документацией.
@@ -31,8 +29,8 @@ Swagger Resolver Bundle [![In English](https://img.shields.io/badge/Switch_To-En
 При отсутствии дополнительной конфигурации бандл автоматически подключит самый оптимальный доступный способ загрузки
 конфигурации. Порядок приоритета:
 1. `NelmioApiDocBundle` - не требует дополнительной конфигурации.
-2. `swagger-php` - По умолчанию сканирует папку `src/`. Использует параметры `swagger_php.scan` и`swagger_php.exclude`.
-3. `json` - По умолчанию ищет файл `web/swagger.json`. Использует параметр `configuration_file`.
+2. `swagger-php` - Использует параметры `openapi_annotation.[area].scan` и `openapi_annotation.[area].exclude`.
+3. `json` - Использует параметр `configuration_file.[area].file`.
 
 Установка
 ---------
@@ -42,7 +40,7 @@ Swagger Resolver Bundle [![In English](https://img.shields.io/badge/Switch_To-En
 Откройте консоль и, перейдя в директорию проекта, выполните следующую команду для загрузки наиболее подходящей
 стабильной версии этого бандла:
 ```bash
-    composer require adrenalinkin/swagger-resolver-bundle
+    composer require marfatech/swagger-resolver-bundle
 ```
 *Эта команда подразумевает что [Composer](https://getcomposer.org) установлен и доступен глобально.*
 
@@ -76,11 +74,11 @@ class AppKernel extends Kernel
 Конфигурация
 ------------
 
-Чтобы начать использовать бандл не требуется предварительной конфигурации.
-Все параметры имеют значения по умолчанию:
+Чтобы начать использовать бандл, требуется предварительная конфигурация только в случае загрузки конфигурации с помощью `swagger-php` или файла конфигурации.
+В остальных случаях конфигурация не потребуется.
 
 ```yaml
-# app/config.yml
+# config/packages/linkin_swagger_resolver.yaml
 linkin_swagger_resolver:
     # список локаций параметров по умолчания, для которых включена нормализация
     enable_normalization:
@@ -88,12 +86,25 @@ linkin_swagger_resolver:
         - 'path'
         - 'header'
     # стратегия для слияния параметров запроса
-    path_merge_strategy:            Linkin\Bundle\SwaggerResolverBundle\Merger\Strategy\StrictMergeStrategy
-    configuration_loader_service:   ~   # имя сервиса загрузки конфигурации
-    configuration_file:             ~   # полный путь к файлу конфигурации
-    swagger_php:                        # настройки для swagger-php
-        scan:       ~                   # массив полных путей для сканирования аннотаций
-        exclude:    ~                   # массив полных путей которые стоит исключить
+    path_merge_strategy:                linkin_swagger_resolver.merge_strategy.strict
+    configuration_file:
+        default:                        # область api
+            file:       ~               # полный путь к файлу конфигурации
+    openapi_annotation:                 # настройки для swagger-php
+        default:                        # область api
+            scan:       ~               # массив полных путей для сканирования аннотаций
+            exclude:    ~               # массив полных путей которые стоит исключить
+```
+
+Для кеширования схем потребуется настройка компонента [Symfony Cache](https://symfony.com/doc/current/cache.html#creating-custom-namespaced-pools).
+
+```yaml
+# config/packages/cache.yaml
+framework:
+    cache:
+        pools:
+            linkin_swagger_resolver.cache:
+                adapter: cache.adapter.filesystem
 ```
 
 Использование
@@ -101,63 +112,44 @@ linkin_swagger_resolver:
 
 ### Шаг 1: Подготовка swagger документации
 
-Подготовка swagger документации отличается в зависимости от используемых инструментов в вашем проекте.
+Подготовка OpenApi документации отличается в зависимости от используемых инструментов в вашем проекте.
 
 **NelmioApiDocBundle** 
 
-Если в вашем проекте подключен `NelmioApiDocBundle` то дополнительная конфигурация не требуется.
+Если в вашем проекте подключен [NelmioApiDocBundle](https://github.com/nelmio/NelmioApiDocBundle), то дополнительная конфигурация не требуется.
 
 **swagger-php** 
 
-В случае отсутствия `NelmioApiDocBundle` бандл деградирует до загрузки конфигурации
-на основании аннотаций `swagger-php`. При этом для сканирования будет использована директория проекта `src/`.
-Чтобы оптимизировать сканирование вы можете указать директории явно:
+В случае отсутствия [NelmioApiDocBundle](https://github.com/nelmio/NelmioApiDocBundle) the bundle needs to be configured to be loaded based on the `swagger-php` annotations.
+To optimize scanning, you can exclude some directories:
 
 ```yaml
-# app/config.yml
+# config/packages/linkin_swagger_resolver.yaml
 linkin_swagger_resolver:
-    swagger_php:
-        scan:
-            - '%kernel.project_dir%/src/Acme/ApiBundle'
-        exclude:
-            - '%kernel.project_dir%/src/Acme/ApiBundle/Resources'
-            - '%kernel.project_dir%/src/Acme/ApiBundle/Repository'
+    openapi_annotation:
+        default:
+            scan:
+                - '%kernel.project_dir%/src/Acme/ApiBundle'
+            exclude:
+                - '%kernel.project_dir%/src/Acme/ApiBundle/Resources'
+                - '%kernel.project_dir%/src/Acme/ApiBundle/Repository'
 ```
 
-**JSON** 
+**JSON/YAML** or *(yml)*
 
-В случае отсутствия `NelmioApiDocBundle` и `swagger-php` бандл деградирует до загрузки конфигурации
-из `json` файла. По умолчанию происходит поиск файла `web/swagger.json`.
-Вы также можете указать путь к файлу с конфигурацией:
+В случае отсутствия [NelmioApiDocBundle](https://github.com/nelmio/NelmioApiDocBundle) бандл необходимо конфигурировать для загрузки `json/yaml/yml` файла.
 
 ```yaml
-# app/config.yml
+# config/packages/linkin_swagger_resolver.yaml
 linkin_swagger_resolver:
-    configuration_file: '%kernel.project_dir%/web/swagger.json' # обязательно расширений файла json
-```
-
-**YAML** or *(yml)* 
-
-В случае отсутствия `NelmioApiDocBundle` и `swagger-php` и наличия конфигурации в формате `yaml` (`yml`)
-вам необходимо указать полный путь к файлу в конфигурации бандла: 
-
-```yaml
-# app/config.yml
-linkin_swagger_resolver:
-    configuration_file: '%kernel.project_dir%/web/swagger.yaml' # обязательно расширений файла yaml или yml
+    configuration_file:
+        default:
+            file: '%kernel.project_dir%/web/swagger.json'
 ```
 
 **Custom**
 
-При необходимости использовать собственный загрузчик вам необходимо реализовать требуемое поведение в классе,
-реализующем интерфейс [SwaggerConfigurationLoaderInterface](./Loader/SwaggerConfigurationLoaderInterface.php).
-После чего необходимо указать название сервиса этого класса в конфигурации: 
-
-```yaml
-# app/config.yml
-linkin_swagger_resolver:
-    configuration_loader_service: acme_app.custom_configuration_loader
-```
+При необходимости использовать собственный загрузчик вам необходимо подменить фабрику `linkin_swagger_resolver.openapi_configuration_factory` в контейнере symfony на свою.
 
 ### Шаг 2: Валидация данных
 
@@ -166,15 +158,15 @@ linkin_swagger_resolver:
 ```php
 <?php declare(strict_types=1);
 
-/** @var \Linkin\Bundle\SwaggerResolverBundle\Factory\SwaggerResolverFactory $factory */
-$factory = $container->get('linkin_swagger_resolver.factory');
+/** @var \Linkin\Bundle\SwaggerResolverBundle\Factory\OpenApiResolverFactory $factory */
+$factory = $container->get('linkin_swagger_resolver.openapi_resolver_factory');
 // загрузка по полному имени класса модели
-$swaggerResolver = $factory->createForDefinition(AcmeApiModel::class);
+$optionsResolver = $factory->createForSchema(AcmeApiModel::class);
 // загрузка имени класса модели
-$swaggerResolver = $factory->createForDefinition('AcmeApiModel');
+$optionsResolver = $factory->createForSchema('AcmeApiModel');
 
 /** @var \Symfony\Component\HttpFoundation\Request $request */
-$data = $swaggerResolver->resolve(json_decode($request->getContent(), true));
+$data = $optionsResolver->resolve(json_decode($request->getContent(), true));
 ```
 
 #### Валидация всего запроса
@@ -182,13 +174,13 @@ $data = $swaggerResolver->resolve(json_decode($request->getContent(), true));
 ```php
 <?php declare(strict_types=1);
 
-/** @var \Linkin\Bundle\SwaggerResolverBundle\Factory\SwaggerResolverFactory $factory */
-$factory = $container->get('linkin_swagger_resolver.factory');
+/** @var \Linkin\Bundle\SwaggerResolverBundle\Factory\OpenApiResolverFactory $factory */
+$factory = $container->get('linkin_swagger_resolver.openapi_resolver_factory');
 $request = $container->get('request_stack')->getCurrentRequest();
 // загрузка всех параметров вызванного метода запроса
-$swaggerResolver = $factory->createForRequest($request);
+$optionsResolver = $factory->createForRequest($request);
 
-$data = $swaggerResolver->resolve(json_decode($request->getContent(), true));
+$data = $optionsResolver->resolve(json_decode($request->getContent(), true));
 ```
 
 Дополнительно
@@ -198,21 +190,21 @@ $data = $swaggerResolver->resolve(json_decode($request->getContent(), true));
 
 Бандл производит валидацию данных посредством системы валидаторов.
 Со списком всех валидаторов вы можете ознакомиться перейдя в папку [Validator](./Validator).
-Валидаторы являются тегированными сервисами. Чтобы создать свой собственный валидатор достаточно создать
-класс, реализующий интерфейс [SwaggerValidatorInterface](./Validator/SwaggerValidatorInterface.php) и
+Валидаторы являются тегированными сервисами. Чтобы создать свой собственный валидатор, достаточно создать
+класс, реализующий интерфейс [SwaggerValidatorInterface](./Validator/OpenApiValidatorInterface.php) и
 зарегистрировать его с тегом `linkin_swagger_resolver.validator`.
 
 ### Собственный нормализатор
 
 Бандл производит нормализацию данных посредством системы нормализаторов.
 Со списком всех нормализаторов вы можете ознакомиться перейдя в папку [Normalizer](./Normalizer).
-Нормализаторы являются тегированными сервисами. Чтобы создать свой собственный нормализатор достаточно создать
-класс, реализующий интерфейс [SwaggerNormalizerInterface](./Normalizer/SwaggerNormalizerInterface.php) и
+Нормализаторы являются тегированными сервисами. Чтобы создать свой собственный нормализатор, достаточно создать
+класс, реализующий интерфейс [SwaggerNormalizerInterface](./Normalizer/OpenApiNormalizerInterface.php) и
 зарегистрировать его с тегом `linkin_swagger_resolver.normalizer`.
 
 ### Симфони валадатор
 
-Бандл предоставляет возможность использовать валидаторы для тела запроса от пакета `symfony/validator`.
+Бандл предоставляет возможность использовать валидаторы для тела запроса от пакета [Symfony Validator](https://symfony.com/doc/current/validation.html).
 Чтобы применить валидацию к свойству необходимо в аннотацию добавить требуемое ограничение.
 Пример для `NotBlank`, `Email`, `NotCompromisedPassword`, `Length`.
 
@@ -223,11 +215,11 @@ declare(strict_types=1);
 
 namespace Acme\Dto;
 
-use Swagger\Annotations as SWG;
+use OpenApi\Annotations as OA;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
- * @SWG\Definition(
+ * @OA\Schema(
  *     type="object",
  *     description="Entry DTO for create user endpoint",
  *     required={
@@ -242,7 +234,7 @@ class UserEntryDto
      * @Assert\NotBlank(message="You should fill email")
      * @Assert\Email()
      *
-     * @SWG\Property(
+     * @OA\Property(
      *     example="foo@acme.com",
      * )
      */
@@ -252,7 +244,7 @@ class UserEntryDto
      * @Assert\NotCompromisedPassword()
      * @Assert\Length(min=8, max=24)
      *
-     * @SWG\Property(
+     * @OA\Property(
      *     example="qwerty123",
      * ) 
      */
@@ -272,7 +264,7 @@ class UserEntryDto
 
 ### Работа с перечислениями
 
-Бандл предоставляет возможность использовать перечисления для тела запроса от пакета `marfatech/enumer-bundle`.
+Бандл предоставляет возможность использовать перечисления для тела запроса от пакета [Enumer Bundle](https://github.com/marfatech/enumer-bundle)`.
 Чтобы применить перечисления к свойству необходимо в аннотацию добавить класс со списоком возможных значений.
 Структуру класса перечисления можно найти в документации к [marfatech/enumer-bundle](https://github.com/marfatech/enumer-bundle/blob/master/README.md).
 ```php
@@ -283,12 +275,12 @@ declare(strict_types=1);
 namespace Acme\Dto;
 
 use Acme\Enum\UserStatusEnum;
-use Swagger\Annotations as SWG;
+use OpenApi\Annotations as OA;
 use Symfony\Component\Validator\Constraints as Assert;
 use MarfaTech\Bundle\EnumerBundle\Enum\EnumInterface;
 
 /**
- * @SWG\Definition(
+ * @OA\Schema(
  *     type="object",
  *     description="Entry DTO for change status user endpoint",
  *     required={
@@ -299,7 +291,7 @@ use MarfaTech\Bundle\EnumerBundle\Enum\EnumInterface;
 class UserStatusEntryDto
 {
     /**
-     * @SWG\Property(
+     * @OA\Property(
      *     enum=UserStatusEnum::class,
      *     example=UserStatusEnum::ACTIVE,
      * )

@@ -13,8 +13,9 @@ declare(strict_types=1);
 
 namespace Linkin\Bundle\SwaggerResolverBundle\Validator;
 
-use EXSyst\Component\Swagger\Schema;
 use Linkin\Bundle\SwaggerResolverBundle\Enum\ParameterTypeEnum;
+use OpenApi\Annotations\Property;
+use OpenApi\Generator;
 use Symfony\Component\OptionsResolver\Exception\InvalidOptionsException;
 
 use function preg_match;
@@ -24,29 +25,33 @@ use function trim;
 /**
  * @author Viktor Linkin <adrenalinkin@gmail.com>
  */
-class StringPatternValidator implements SwaggerValidatorInterface
+class StringPatternValidator implements OpenApiValidatorInterface
 {
     /**
      * {@inheritdoc}
      */
-    public function supports(Schema $property, array $context = []): bool
+    public function supports(Property $property): bool
     {
-        return ParameterTypeEnum::STRING === $property->getType() && null !== $property->getPattern();
+        return $property->type === ParameterTypeEnum::STRING && !Generator::isDefault($property->pattern);
     }
 
     /**
      * {@inheritdoc}
      */
-    public function validate(Schema $property, string $propertyName, $value): void
+    public function validate(Property $property, $value): void
     {
-        $pattern = sprintf('/%s/', trim($property->getPattern(), '/'));
+        if ($value === null) {
+            return;
+        }
+
+        $propertyName = $property->property;
+
+        $pattern = sprintf('/%s/', trim($property->pattern, '/'));
 
         if (!preg_match($pattern, $value)) {
-            throw new InvalidOptionsException(sprintf(
-                'Property "%s" should match the pattern "%s"',
-                $propertyName,
-                $pattern
-            ));
+            $message = sprintf('Property "%s" should match the pattern "%s"', $propertyName, $pattern);
+
+            throw new InvalidOptionsException($message);
         }
     }
 }

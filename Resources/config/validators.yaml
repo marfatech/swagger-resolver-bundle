@@ -1,0 +1,65 @@
+services:
+    linkin_swagger_resolver.validator.array_max_items:
+        class: Linkin\Bundle\SwaggerResolverBundle\Validator\ArrayMaxItemsValidator
+        tags:
+            - { name: linkin_swagger_resolver.validator }
+
+    linkin_swagger_resolver.validator.array_min_items:
+        class: Linkin\Bundle\SwaggerResolverBundle\Validator\ArrayMinItemsValidator
+        tags:
+            - { name: linkin_swagger_resolver.validator }
+
+    linkin_swagger_resolver.validator.array_unique_items:
+        class: Linkin\Bundle\SwaggerResolverBundle\Validator\ArrayUniqueItemsValidator
+        tags:
+            - { name: linkin_swagger_resolver.validator }
+
+    linkin_swagger_resolver.validator.format_date:
+        class: Linkin\Bundle\SwaggerResolverBundle\Validator\FormatDateValidator
+        tags:
+            - { name: linkin_swagger_resolver.validator }
+
+    linkin_swagger_resolver.validator.format_date_time:
+        class: Linkin\Bundle\SwaggerResolverBundle\Validator\FormatDateTimeValidator
+        tags:
+            - { name: linkin_swagger_resolver.validator }
+
+    linkin_swagger_resolver.validator.format_timestamp:
+        class: Linkin\Bundle\SwaggerResolverBundle\Validator\FormatTimestampValidator
+        tags:
+            - { name: linkin_swagger_resolver.validator }
+
+    linkin_swagger_resolver.validator.format_time:
+        class: Linkin\Bundle\SwaggerResolverBundle\Validator\FormatTimeValidator
+        tags:
+            - { name: linkin_swagger_resolver.validator }
+
+    linkin_swagger_resolver.validator.number_maximum:
+        class: Linkin\Bundle\SwaggerResolverBundle\Validator\NumberMaximumValidator
+        tags:
+            - { name: linkin_swagger_resolver.validator }
+
+    linkin_swagger_resolver.validator.number_minimum:
+        class: Linkin\Bundle\SwaggerResolverBundle\Validator\NumberMinimumValidator
+        tags:
+            - { name: linkin_swagger_resolver.validator }
+
+    linkin_swagger_resolver.validator.number_multiple_of:
+        class: Linkin\Bundle\SwaggerResolverBundle\Validator\NumberMultipleOfValidator
+        tags:
+            - { name: linkin_swagger_resolver.validator }
+
+    linkin_swagger_resolver.validator.string_max_length:
+        class: Linkin\Bundle\SwaggerResolverBundle\Validator\StringMaxLengthValidator
+        tags:
+            - { name: linkin_swagger_resolver.validator }
+
+    linkin_swagger_resolver.validator.string_min_length:
+        class: Linkin\Bundle\SwaggerResolverBundle\Validator\StringMinLengthValidator
+        tags:
+            - { name: linkin_swagger_resolver.validator }
+
+    linkin_swagger_resolver.validator.string_pattern:
+        class: Linkin\Bundle\SwaggerResolverBundle\Validator\StringPatternValidator
+        tags:
+            - { name: linkin_swagger_resolver.validator }

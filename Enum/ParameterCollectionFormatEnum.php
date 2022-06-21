@@ -28,19 +28,11 @@ class ParameterCollectionFormatEnum
     public const PIPES = 'pipes';
     public const MULTI = 'multi';
 
-    /**
-     * @return array
-     */
     public static function getAll(): array
     {
         return [self::CSV, self::SSV, self::TSV, self::PIPES, self::MULTI];
     }
 
-    /**
-     * @param string $collectionFormat
-     *
-     * @return string
-     */
     public static function getDelimiter(string $collectionFormat): string
     {
         switch ($collectionFormat) {

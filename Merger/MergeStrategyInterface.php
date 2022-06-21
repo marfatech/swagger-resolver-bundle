@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace Linkin\Bundle\SwaggerResolverBundle\Merger;
 
+use OpenApi\Annotations\Property;
+
 /**
  * @author Viktor Linkin <adrenalinkin@gmail.com>
  */
@@ -20,25 +22,20 @@ interface MergeStrategyInterface
 {
     /**
      * Add parameter into collection
-     *
-     * @param string $parameterSource
-     * @param string $name
-     * @param array $data
-     * @param bool $isRequired
      */
-    public function addParameter(string $parameterSource, string $name, array $data, bool $isRequired);
+    public function addParameter(string $parameterSource, Property $property, bool $required);
 
     /**
      * Returns list of collected parameters
      *
-     * @return array
+     * @return array<int, Property>
      */
     public function getParameters(): array;
 
     /**
      * Returns list of names of the required parameters
      *
-     * @return array
+     * @return array<int, string>
      */
     public function getRequired(): array;
 
