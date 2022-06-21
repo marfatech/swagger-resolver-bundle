@@ -17,6 +17,8 @@ use Linkin\Bundle\SwaggerResolverBundle\Enum\ParameterTypeEnum;
 use OpenApi\Annotations\Schema;
 use OpenApi\Generator;
 
+use function array_values;
+
 /**
  * @author MarfaTech <https://marfa-tech.com>
  */
@@ -59,5 +61,11 @@ class ParameterTypeMatcher
 
             default:
         }
+
+        if ($schema->nullable === true) {
+            $types['null'] = 'null';
+        }
+
+        $types = array_values($types);
     }
 }
