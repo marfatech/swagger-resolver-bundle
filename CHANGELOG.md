@@ -1,9 +1,13 @@
 ## [Unreleased]
 ### Added
 - Support OpenApi 3.
+- Support Symfony `~6.0`
 ### Removed
 - [BC] Support Swagger 2.
 - [BC] Set `nullable` type if property isn't required.
+### Changed
+- Updated `symfony/*` with pattern version `~4.4||~5.4||~6.0`.
+- Removed compatibility with PHP lower than `8.0`.
 
 ## [0.5.1] - 2022-06-15
 ### Fixed
@@ -16,12 +20,9 @@
 - Accept property annotation constraints.
 - Swagger extension `x-class` has full class name of body model.
 - Accept enum class to swagger enum configuration.
-- Support Symfony `~6.0`
 ### Changed
 - Required field can be with `null` value.
 - Remove support of `symfony/*` with version `~3.4`.
-- Updated `symfony/*` with pattern version `~4.4||~5.4||~6.0`.
-- Removed compatibility with PHP lower than `8.0`.
 
 ## [0.4.11]
 ### Changed

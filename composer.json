@@ -29,7 +29,7 @@
     ],
 
     "require": {
-        "php":                          "~7.4||~8.0",
+        "php":                          "~8.0",
         "ext-json":                     "*",
         "symfony/cache-contracts":      "^2.5||^3.1",
         "symfony/config":               "~4.4||~5.4",

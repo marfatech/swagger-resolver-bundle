@@ -20,9 +20,11 @@ jobs:
           php-version: ${{ matrix.php-versions }}
           tools: composer
 
-      - name: Composer install and lock options resolver
+      - name: Composer install and lock symfony
         run: |
-          composer require symfony/options-resolver:${{ matrix.symfony-versions }}
+          export SYMFONY_REQUIRE=${{ matrix.symfony-versions }} \
+          && composer global require --no-progress --no-scripts --no-plugins symfony/flex \
+          && composer install --prefer-dist --no-progress
 
       - name: Run tests
         run: |
