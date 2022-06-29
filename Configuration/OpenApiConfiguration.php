@@ -148,7 +148,7 @@ class OpenApiConfiguration implements IteratorAggregate, CacheWarmerInterface, O
      * @throws InvalidArgumentException
      * @throws Exception
      */
-    public function warmUp(string $cacheDir): array
+    public function warmUp(string $cacheDir)
     {
         if (!$this->cache) {
             return [];
