@@ -40,6 +40,7 @@ use function array_map;
 use function class_exists;
 use function get_class;
 use function in_array;
+use function interface_exists;
 use function is_array;
 
 use const PHP_VERSION_ID;
@@ -68,8 +69,15 @@ class ObjectModelDescriber extends NelmioObjectModelDescriber
 
     public function supports(Model $model): bool
     {
+        $className = $model->getType()->getClassName();
+
         $isObjectType = Type::BUILTIN_TYPE_OBJECT === $model->getType()->getBuiltinType();
-        $isClassExists = class_exists($model->getType()->getClassName());
+
+        if ($className) {
+            $isClassExists = class_exists($className) || interface_exists($className);
+        } else {
+            $isClassExists = false;
+        }
 
         return $isObjectType && $isClassExists;
     }
@@ -79,9 +87,14 @@ class ObjectModelDescriber extends NelmioObjectModelDescriber
      */
     public function describe(Model $model, Schema $schema): void
     {
+        $class = $model->getType()->getClassName();
+
+        if (interface_exists($class)) {
+            return;
+        }
+
         parent::describe($model, $schema);
 
-        $class = $model->getType()->getClassName();
         $reflectionClass = new ReflectionClass($class);
 
         $extSchema[ParameterExtensionEnum::X_CLASS] = $class;

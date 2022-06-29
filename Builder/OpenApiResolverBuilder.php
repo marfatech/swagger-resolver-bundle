@@ -36,8 +36,8 @@ use Symfony\Component\Validator\Mapping\ClassMetadata;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 use function array_filter;
+use function array_flip;
 use function array_intersect_key;
-use function array_values;
 use function class_exists;
 use function implode;
 use function in_array;
@@ -189,8 +189,18 @@ class OpenApiResolverBuilder
 
         $schema = new Schema(['required' => $required, 'properties' => $properties]);
 
-        $resolver->setDefault($name, function (OptionsResolver $nestedResolver) use ($schema) {
-            $this->build($schema, $nestedResolver);
+        $resolver->setNormalizer($name, function (Options $options, $value) use ($schema) {
+            if (!is_array($value)) {
+                return $value;
+            }
+
+            $allOfResolver = $this->build($schema);
+            $definedOptions = array_flip($allOfResolver->getDefinedOptions());
+            $value = array_intersect_key($value, $definedOptions);
+
+            $allOfResolver->resolve($value);
+
+            return $value;
         });
 
         return $resolver;
@@ -209,7 +219,7 @@ class OpenApiResolverBuilder
         }
 
         if ($allowedTypes) {
-            $resolver->addAllowedTypes($name, array_values($allowedTypes));
+            $resolver->addAllowedTypes($name, $allowedTypes);
         }
 
         $resolver->setNormalizer($name, function (Options $options, $value) use ($property, $name) {
@@ -235,9 +245,9 @@ class OpenApiResolverBuilder
                     $valueIntersectProperties = array_intersect_key($value, $schema->properties);
 
                     $oneOfItemResolver->resolve($valueIntersectProperties);
-                } catch (MissingOptionsException) {
+                } catch (MissingOptionsException $exception) {
                     continue;
-                } catch (ExceptionInterface) {
+                } catch (ExceptionInterface $exception) {
                 }
 
                 $compatibilitySchema = $schema;
@@ -289,7 +299,7 @@ class OpenApiResolverBuilder
         }
 
         if ($allowedTypes) {
-            $resolver->addAllowedTypes($name, array_values($allowedTypes));
+            $resolver->addAllowedTypes($name, $allowedTypes);
         }
 
         $resolver->setNormalizer($name, function (Options $options, $value) use ($property, $name) {
@@ -315,9 +325,9 @@ class OpenApiResolverBuilder
                     $valueIntersectProperties = array_intersect_key($value, $schema->properties);
 
                     $oneOfItemResolver->resolve($valueIntersectProperties);
-                } catch (MissingOptionsException) {
+                } catch (MissingOptionsException $exception) {
                     continue;
-                } catch (ExceptionInterface) {
+                } catch (ExceptionInterface $exception) {
                 }
 
                 $compatibilitySchema = $schema;
@@ -418,19 +428,38 @@ class OpenApiResolverBuilder
             $referenceClassSchemaExist = class_exists($schema->x[ParameterExtensionEnum::X_CLASS]);
 
             if ($extensionReferenceSchemaExist && $referenceClassSchemaExist) {
-                $schemaClassName = $schema->x[ParameterExtensionEnum::X_CLASS];
+                $resolver->addNormalizer($name, function (Options $options, $value) use ($schema) {
+                    if (!is_array($value)) {
+                        return $value;
+                    }
 
-                $resolver->addNormalizer($name, static function (Options $options, $value) use ($schemaClassName) {
-                    return is_array($value) ? new $schemaClassName($value) : $value;
+                    $nestedResolver = $this->build($schema);
+                    $definedOptions = array_flip($nestedResolver->getDefinedOptions());
+                    $value = array_intersect_key($value, $definedOptions);
+
+                    $nestedResolver->resolve($value);
+                    $schemaClassName = $schema->x[ParameterExtensionEnum::X_CLASS];
+
+                    return new $schemaClassName($value);
                 });
             }
         } else {
             $schema = $property;
-        }
 
-        $resolver->setDefault($name, function (OptionsResolver $nestedResolver) use ($schema) {
-            $this->build($schema, $nestedResolver);
-        });
+            $resolver->addNormalizer($name, function (Options $options, $value) use ($schema) {
+                if (!is_array($value)) {
+                    return $value;
+                }
+
+                $nestedResolver = $this->build($schema);
+                $definedOptions = array_flip($nestedResolver->getDefinedOptions());
+                $value = array_intersect_key($value, $definedOptions);
+
+                $nestedResolver->resolve($value);
+
+                return $value;
+            });
+        }
 
         return $resolver;
     }
@@ -451,12 +480,8 @@ class OpenApiResolverBuilder
 
         $this->parameterTypeMatcher->matchTypes($property, $allowedTypes);
 
-        if ($property->nullable === true) {
-            $allowedTypes['null'] = 'null';
-        }
-
         if ($allowedTypes) {
-            $resolver->addAllowedTypes($name, array_values($allowedTypes));
+            $resolver->addAllowedTypes($name, $allowedTypes);
         }
 
         return $resolver;
