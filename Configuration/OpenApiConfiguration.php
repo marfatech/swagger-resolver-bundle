@@ -26,7 +26,6 @@ use OpenApi\Annotations\Schema;
 use OpenApi\Generator as OAGenerator;
 use OpenApi\Serializer;
 use Psr\Cache\InvalidArgumentException;
-use Symfony\Component\HttpKernel\CacheWarmer\CacheWarmerInterface;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Contracts\Cache\CacheInterface;
@@ -38,7 +37,7 @@ use function strtoupper;
 /**
  * @author MarfaTech <https://marfa-tech.com>
  */
-class OpenApiConfiguration implements IteratorAggregate, CacheWarmerInterface, OpenApiConfigurationInterface
+class OpenApiConfiguration implements IteratorAggregate, OpenApiConfigurationInterface
 {
     private const CACHE_KEY = 'linkin_swagger_resolver';
     private const METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'];
@@ -143,12 +142,10 @@ class OpenApiConfiguration implements IteratorAggregate, CacheWarmerInterface, O
     }
 
     /**
-     * {@inheritDoc}
-     *
      * @throws InvalidArgumentException
      * @throws Exception
      */
-    public function warmUp(string $cacheDir)
+    public function warmUp(): array
     {
         if (!$this->cache) {
             return [];
@@ -173,14 +170,6 @@ class OpenApiConfiguration implements IteratorAggregate, CacheWarmerInterface, O
         }
 
         return [];
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function isOptional(): bool
-    {
-        return true;
     }
 
     private function serializeSchema(string $schemaName): string
