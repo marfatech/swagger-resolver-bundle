@@ -29,16 +29,16 @@
     ],
 
     "require": {
-        "php":                          "~7.4||~8.0",
+        "php":                          "~8.0",
         "ext-json":                     "*",
         "symfony/cache-contracts":      "^2.5||^3.1",
-        "symfony/config":               "~4.4||~5.4",
-        "symfony/dependency-injection": "~4.4||~5.4",
-        "symfony/http-foundation":      "~4.4||~5.4",
-        "symfony/http-kernel":          "~4.4||~5.4",
-        "symfony/options-resolver":     "~4.4||~5.4",
-        "symfony/routing":              "~4.4||~5.4",
-        "symfony/yaml":                 "~4.4||~5.4",
+        "symfony/config":               "~4.4||~5.4||~6.0",
+        "symfony/dependency-injection": "~4.4||~5.4||~6.0",
+        "symfony/http-foundation":      "~4.4||~5.4||~6.0",
+        "symfony/http-kernel":          "~4.4||~5.4||~6.0",
+        "symfony/options-resolver":     "~4.4||~5.4||~6.0",
+        "symfony/routing":              "~4.4||~5.4||~6.0",
+        "symfony/yaml":                 "~4.4||~5.4||~6.0",
         "zircote/swagger-php":          "^4.4"
     },
 
@@ -48,8 +48,9 @@
 
     "require-dev": {
         "nelmio/api-doc-bundle":        "^4.9",
-        "symfony/validator":            "^6.0",
-        "marfatech/enumer-bundle":      "^2.0"
+        "symfony/validator":            "~4.4||~5.4||^6.0",
+        "marfatech/enumer-bundle":      "^2.0",
+        "phpunit/phpunit":              "^7.0 || ^8.0 || ^9.0"
     },
 
     "repositories": [

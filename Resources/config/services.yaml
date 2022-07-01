@@ -26,8 +26,6 @@ services:
     linkin_swagger_resolver.openapi_configuration:
         class: Linkin\Bundle\SwaggerResolverBundle\Configuration\OpenApiConfiguration
         factory: '@linkin_swagger_resolver.openapi_configuration_factory'
-        tags:
-            - { name: kernel.cache_warmer }
 
     linkin_swagger_resolver.openapi_configuration_factory:
         class: Linkin\Bundle\SwaggerResolverBundle\Factory\OpenApiConfigurationFactory
