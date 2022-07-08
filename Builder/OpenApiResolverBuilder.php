@@ -466,16 +466,6 @@ class OpenApiResolverBuilder
 
     private function addType(OptionsResolver $resolver, string $name, Property $property): OptionsResolver
     {
-        $isItemsSchema = !Generator::isDefault($property->items);
-
-        if ($isItemsSchema && $property->items->type !== 'object' && !Generator::isDefault($property->items->type)) {
-            $type = $property->items->type === 'number' ? 'float' : $property->items->type;
-
-            $resolver->addAllowedTypes($name, $type . '[]');
-
-            return $resolver;
-        }
-
         $allowedTypes = [];
 
         $this->parameterTypeMatcher->matchTypes($property, $allowedTypes);

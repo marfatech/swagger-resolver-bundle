@@ -48,6 +48,13 @@ class ParameterTypeMatcher
                 $types['float'] = 'float';
                 break;
 
+            case $this->isScalarItemsSchema($schema):
+                $type = $schema->items->type === 'number' ? 'float' : $schema->items->type;
+                $type .= '[]';
+
+                $types[$type] = $type;
+                break;
+
             case $propertyType === ParameterTypeEnum::ARRAY:
                 $type = Generator::isDefault($schema->collectionFormat) ? 'array' : 'string';
                 $types[$type] = $type;
@@ -67,5 +74,28 @@ class ParameterTypeMatcher
         }
 
         $types = array_values($types);
+    }
+
+    private function isScalarItemsSchema(Schema $schema): bool
+    {
+        $isItemsSchema = !Generator::isDefault($schema->items);
+
+        if ($isItemsSchema === false) {
+            return false;
+        }
+
+        $isNotObjectTypeOfItems = $schema->items->type !== 'object';
+
+        if ($isNotObjectTypeOfItems === false) {
+            return false;
+        }
+
+        $isNotUndefinedTypeOfItems = !Generator::isDefault($schema->items->type);
+
+        if ($isNotUndefinedTypeOfItems === false) {
+            return false;
+        }
+
+        return true;
     }
 }
