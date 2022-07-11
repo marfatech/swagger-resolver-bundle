@@ -394,7 +394,7 @@ class OpenApiResolverBuilder
                     $resultList = [];
 
                     foreach ($value as $key => $item) {
-                        $resultList[$key] = is_array($value) ? new $schemaClassName($value) : $value;
+                        $resultList[$key] = is_array($item) ? new $schemaClassName($item) : $item;
                     }
 
                     return $resultList;
