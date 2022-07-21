@@ -50,7 +50,9 @@
         "nelmio/api-doc-bundle":        "^4.9",
         "symfony/validator":            "~4.4||~5.4||^6.0",
         "marfatech/enumer-bundle":      "^2.0",
-        "phpunit/phpunit":              "^7.0 || ^8.0 || ^9.0"
+        "phpunit/phpunit":              "^7.0 || ^8.0 || ^9.0",
+        "symfony/flex":                 "^2.2",
+        "roave/security-advisories":    "dev-latest"
     },
 
     "repositories": [
@@ -75,6 +77,12 @@
     "autoload": {
         "psr-4": {
             "Linkin\\Bundle\\SwaggerResolverBundle\\": ""
+        }
+    },
+
+    "config": {
+        "allow-plugins": {
+            "symfony/flex": true
         }
     }
 }

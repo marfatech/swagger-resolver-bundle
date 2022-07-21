@@ -19,12 +19,13 @@ jobs:
         with:
           php-version: ${{ matrix.php-versions }}
           tools: composer
+        env:
+          COMPOSER_TOKEN: ${{ secrets.COMPOSER_TOKEN }}
 
-      - name: Composer install and lock symfony
-        run: |
-          export SYMFONY_REQUIRE=${{ matrix.symfony-versions }} \
-          && composer global require --no-progress --no-scripts --no-plugins symfony/flex \
-          && composer install --prefer-dist --no-progress
+      - name: Composer install on php ${{ matrix.php-versions }} and symfony ${{ matrix.symfony-versions }}
+        uses: ramsey/composer-install@v2
+        env:
+          SYMFONY_REQUIRE: ${{ matrix.symfony-versions }}
 
       - name: Run tests
         run: |
