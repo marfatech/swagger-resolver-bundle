@@ -21,4 +21,9 @@ class ParameterExtensionEnum
     public const X_PARAMETER_LOCATION = 'parameter_location';
     public const X_OPTION_RESOLVE = 'option_resolve';
     public const X_CLASS = 'class';
+
+    public static function getAll(): array
+    {
+        return [self::X_PARAMETER_LOCATION, self::X_OPTION_RESOLVE, self::X_CLASS];
+    }
 }
