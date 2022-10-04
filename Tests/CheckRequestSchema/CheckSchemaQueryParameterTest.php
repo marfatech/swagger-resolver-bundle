@@ -56,7 +56,6 @@ class CheckSchemaQueryParameterTest extends KernelTestCase
             'required' =>
                 [
                     'limitField' => 'limitField',
-                    'type' => 'in',
                 ],
             'properties' =>
                 [
