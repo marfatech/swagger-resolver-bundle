@@ -71,7 +71,7 @@ class FormatDateTimeValidatorTest extends KernelTestCase
     {
         return [
             'Fail when true value' => [true],
-            'Fail when incorrect month pattern - number' => ['2022-071-01 10:00:01'],
+            'Fail when incorrect month pattern - number' => ['2022-571-01 10:00:01'],
             'Fail when incorrect day pattern - number' => ['2022-07-011 10:00:01'],
             'Fail when incorrect year pattern - number' => ['20220-07-011 10:00:01'],
             'Fail when incorrect hour pattern - number' => ['2022-07-01 1011:00:01'],
