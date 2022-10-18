@@ -57,23 +57,21 @@ class CheckSchemaQueryParameterTest extends KernelTestCase
                 [
                     'limitField' => 'limitField',
                 ],
+            'title' => 'query',
             'properties' =>
                 [
                     'search' =>
                         new Property([
-                            'title' => 'query',
                             'type' => 'string',
                             'example' => 'search',
                         ]),
                     'hah' =>
                         new Property([
-                            'title' => 'query',
                             'type' => 'string',
                             'example' => 'cap',
                         ]),
                     'limitField' =>
                         new Property([
-                            'title' => 'query',
                             'type' => 'integer',
                             'example' => 150,
                         ]),
