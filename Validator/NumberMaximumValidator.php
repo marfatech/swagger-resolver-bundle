@@ -26,6 +26,8 @@ use function sprintf;
  */
 class NumberMaximumValidator implements OpenApiValidatorInterface
 {
+    private bool $exclusiveMaximum = false;
+
     /**
      * {@inheritdoc}
      */
@@ -50,13 +52,17 @@ class NumberMaximumValidator implements OpenApiValidatorInterface
         $message = sprintf('Property "%s" value should be', $propertyName);
         $maximum = $property->maximum;
 
-        if ($property->exclusiveMaximum === true && $value >= $maximum) {
+        if (!Generator::isDefault($property->exclusiveMaximum)) {
+            $this->exclusiveMaximum = $property->exclusiveMaximum;
+        }
+
+        if ($this->exclusiveMaximum === true && $value >= $maximum) {
             $message = sprintf('%s strictly lower than %s', $message, $maximum);
 
             throw new InvalidOptionsException($message);
         }
 
-        if ($property->exclusiveMaximum === false && $value > $maximum) {
+        if ($this->exclusiveMaximum === false && $value > $maximum) {
             $message = sprintf('%s lower than or equal to %s', $message, $maximum);
 
             throw new InvalidOptionsException($message);

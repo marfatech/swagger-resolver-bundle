@@ -16,6 +16,7 @@ namespace Linkin\Bundle\SwaggerResolverBundle\Validator;
 use Linkin\Bundle\SwaggerResolverBundle\Enum\ParameterCollectionFormatEnum;
 use Linkin\Bundle\SwaggerResolverBundle\Enum\ParameterTypeEnum;
 use OpenApi\Annotations\Property;
+use OpenApi\Generator;
 use Symfony\Component\OptionsResolver\Exception\InvalidOptionsException;
 
 use function explode;
@@ -46,7 +47,7 @@ abstract class AbstractArrayValidator implements OpenApiValidatorInterface
             return [];
         }
 
-        if ($collectionFormat === null) {
+        if ($collectionFormat === null || Generator::isDefault($collectionFormat)) {
             if (is_array($value)) {
                 return $value;
             }
