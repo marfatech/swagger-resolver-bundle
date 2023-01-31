@@ -1,4 +1,7 @@
 ## [Unreleased]
+### Fixed
+- Fixed default properties of `NumberMinimumValidator`, `NumberMaximumValidator` and `ArrayUniqueItemsValidator`.
+- Fixed multiple validators and constraints usage.
 
 ## [1.0.0] - 2022-07-21
 ### Added

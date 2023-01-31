@@ -524,10 +524,10 @@ class OpenApiResolverBuilder
                 continue;
             }
 
-            $resolver->addAllowedValues($name, function ($value) use ($openApiValidator, $property) {
+            $resolver->addNormalizer($name, function ($field, $value) use ($openApiValidator, $property) {
                 $openApiValidator->validate($property, $value);
 
-                return true;
+                return $value;
             });
         }
 
@@ -560,7 +560,7 @@ class OpenApiResolverBuilder
                 continue;
             }
 
-            $resolver->addAllowedValues($name, function ($value) use ($schemaClass, $name) {
+            $resolver->addNormalizer($name, function ($field, $value) use ($schemaClass, $name) {
                 $violations = $this->validator
                     ->startContext()
                     ->atPath($name)
@@ -572,7 +572,7 @@ class OpenApiResolverBuilder
                     throw new ValidationFailedException($value, $violations);
                 }
 
-                return true;
+                return $value;
             });
         }
 

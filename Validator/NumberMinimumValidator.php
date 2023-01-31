@@ -26,6 +26,8 @@ use function sprintf;
  */
 class NumberMinimumValidator implements OpenApiValidatorInterface
 {
+    private bool $exclusiveMinimum = false;
+
     /**
      * {@inheritdoc}
      */
@@ -50,13 +52,17 @@ class NumberMinimumValidator implements OpenApiValidatorInterface
         $message = sprintf('Property "%s" value should be', $propertyName);
         $minimum = $property->minimum;
 
-        if ($property->exclusiveMinimum === true && $value <= $minimum) {
+        if (!Generator::isDefault($property->exclusiveMinimum)) {
+            $this->exclusiveMinimum = $property->exclusiveMinimum;
+        }
+
+        if ($this->exclusiveMinimum === true && $value <= $minimum) {
             $message = sprintf('%s strictly greater than %s', $message, $minimum);
 
             throw new InvalidOptionsException($message);
         }
 
-        if ($property->exclusiveMinimum === false && $value < $minimum) {
+        if ($this->exclusiveMinimum === false && $value < $minimum) {
             $message = sprintf('%s greater than or equal to %s', $message, $minimum);
 
             throw new InvalidOptionsException($message);
