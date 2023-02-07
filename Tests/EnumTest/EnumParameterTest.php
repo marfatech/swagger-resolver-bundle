@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Linkin\Bundle\SwaggerResolverBundle\Tests\EnumTest;
 
+use ArrayObject;
 use Linkin\Bundle\SwaggerResolverBundle\Builder\OpenApiResolverBuilder;
 use Linkin\Bundle\SwaggerResolverBundle\Configuration\OpenApiConfiguration;
 use Linkin\Bundle\SwaggerResolverBundle\Matcher\ParameterTypeMatcher;
@@ -30,8 +31,8 @@ class EnumParameterTest extends KernelTestCase
         $fieldType = 'string';
 
         $builder = new OpenApiResolverBuilder(
-            new \ArrayObject(),
-            new \ArrayObject(),
+            new ArrayObject(),
+            new ArrayObject(),
             [],
             $this->createMock(OpenApiConfiguration::class),
             new ParameterTypeMatcher(),
@@ -52,8 +53,8 @@ class EnumParameterTest extends KernelTestCase
         $fieldType = 'string';
 
         $builder = new OpenApiResolverBuilder(
-            new \ArrayObject(),
-            new \ArrayObject(),
+            new ArrayObject(),
+            new ArrayObject(),
             [],
             $this->createMock(OpenApiConfiguration::class),
             new ParameterTypeMatcher(),

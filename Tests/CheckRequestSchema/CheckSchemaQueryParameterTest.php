@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Linkin\Bundle\SwaggerResolverBundle\Tests\CheckRequestSchema;
 
+use ArrayObject;
 use Exception;
 use Linkin\Bundle\SwaggerResolverBundle\Builder\OpenApiResolverBuilder;
 use Linkin\Bundle\SwaggerResolverBundle\Configuration\OpenApiConfiguration;
@@ -35,8 +36,8 @@ class CheckSchemaQueryParameterTest extends KernelTestCase
         $originValue = 2000;
 
         $builder = new OpenApiResolverBuilder(
-            new \ArrayObject(),
-            new \ArrayObject([new NumberMinimumValidator(), new NumberMaximumValidator()]),
+            new ArrayObject(),
+            new ArrayObject([new NumberMinimumValidator(), new NumberMaximumValidator()]),
             [],
             $this->createMock(OpenApiConfiguration::class),
             new ParameterTypeMatcher(),

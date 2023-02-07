@@ -24,15 +24,11 @@ class ArrayMaxItemsValidatorTest extends KernelTestCase
     private const COLLECTION_FORMAT_CSV = 'csv';
     private const COLLECTION_FORMAT_MULTI = 'multi';
 
-
-    /**
-     * @var ArrayMaxItemsValidator
-     */
-    private $sut;
+    private ArrayMaxItemsValidator $validator;
 
     protected function setUp(): void
     {
-        $this->sut = new ArrayMaxItemsValidator();
+        $this->validator = new ArrayMaxItemsValidator();
     }
 
     /**
@@ -41,7 +37,7 @@ class ArrayMaxItemsValidatorTest extends KernelTestCase
     public function testSchemaBuilder(string $format, ?int $maxItems, bool $expectedResult): void
     {
         $schema = $this->createSchemaDefinition($format, $maxItems);
-        $isSupported = $this->sut->supports($schema);
+        $isSupported = $this->validator->supports($schema);
 
         self::assertSame($isSupported, $expectedResult);
     }
@@ -76,7 +72,7 @@ class ArrayMaxItemsValidatorTest extends KernelTestCase
 
         $this->expectException(InvalidOptionsException::class);
 
-        $this->sut->validate($schemaProperty, $value);
+        $this->validator->validate($schemaProperty, $value);
     }
 
     public function failToPassValidationDataProvider(): array
@@ -112,7 +108,7 @@ class ArrayMaxItemsValidatorTest extends KernelTestCase
     {
         $schemaProperty = $this->createSchemaDefinitionFailToPassValidation($collectionFormat, $maxItems);
 
-        $this->sut->validate($schemaProperty, $value);
+        $this->validator->validate($schemaProperty, $value);
         self::assertTrue(true);
     }
 

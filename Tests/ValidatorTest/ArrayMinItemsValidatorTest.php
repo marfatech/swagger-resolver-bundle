@@ -24,15 +24,11 @@ class ArrayMinItemsValidatorTest extends KernelTestCase
     private const COLLECTION_FORMAT_CSV = 'csv';
     private const COLLECTION_FORMAT_MULTI = 'multi';
 
-
-    /**
-     * @var ArrayMinItemsValidator
-     */
-    private $sut;
+    private ArrayMinItemsValidator $validator;
 
     protected function setUp(): void
     {
-        $this->sut = new ArrayMinItemsValidator();
+        $this->validator = new ArrayMinItemsValidator();
     }
 
     /**
@@ -41,7 +37,7 @@ class ArrayMinItemsValidatorTest extends KernelTestCase
     public function testSupport(string $format, ?int $minItems, bool $expectedResult): void
     {
         $schema = $this->createSchemaDefinition($format, $minItems);
-        $isSupported = $this->sut->supports($schema);
+        $isSupported = $this->validator->supports($schema);
 
         self::assertSame($isSupported, $expectedResult);
     }
@@ -76,7 +72,7 @@ class ArrayMinItemsValidatorTest extends KernelTestCase
 
         $this->expectException(InvalidOptionsException::class);
 
-        $this->sut->validate($schemaProperty, $value);
+        $this->validator->validate($schemaProperty, $value);
     }
 
     public function failToPassValidationDataProvider(): array
@@ -112,7 +108,7 @@ class ArrayMinItemsValidatorTest extends KernelTestCase
     {
         $schemaProperty = $this->createSchemaDefinitionFailToPassValidation($collectionFormat, $minItems);
 
-        $this->sut->validate($schemaProperty, $value);
+        $this->validator->validate($schemaProperty, $value);
         self::assertTrue(true);
     }
 

@@ -17,6 +17,7 @@ use Linkin\Bundle\SwaggerResolverBundle\Validator\StringMaxLengthValidator;
 use OpenApi\Annotations\Property;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\OptionsResolver\Exception\InvalidOptionsException;
+
 use function str_repeat;
 
 class StringMaxLengthValidatorTest extends KernelTestCase
