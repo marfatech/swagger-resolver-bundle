@@ -87,6 +87,10 @@ class OpenApiConfiguration implements IteratorAggregate, OpenApiConfigurationInt
         $schemaList = [];
 
         foreach ($this->openApiList as $openApi) {
+            if (OAGenerator::isDefault($openApi->components) || OAGenerator::isDefault($openApi->components->schemas)) {
+                continue;
+            }
+
             foreach ($openApi->components->schemas as $schema) {
                 $schemaList[$schema->schema] = $schema;
             }
