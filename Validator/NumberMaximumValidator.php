@@ -51,6 +51,7 @@ class NumberMaximumValidator implements OpenApiValidatorInterface
 
         $message = sprintf('Property "%s" value should be', $propertyName);
         $maximum = $property->maximum;
+        $this->exclusiveMaximum = false;
 
         if (!Generator::isDefault($property->exclusiveMaximum)) {
             $this->exclusiveMaximum = $property->exclusiveMaximum;

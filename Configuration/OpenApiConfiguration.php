@@ -292,7 +292,7 @@ class OpenApiConfiguration implements IteratorAggregate, OpenApiConfigurationInt
     /**
      * @return array
      */
-    public function getOpenApiList(): array
+    private function getOpenApiList(): array
     {
         if ($this->openApiList === null) {
             foreach ($this->openApiGenerator as $key => $value) {
