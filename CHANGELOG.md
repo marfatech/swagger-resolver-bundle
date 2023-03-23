@@ -1,4 +1,9 @@
 ## [Unreleased]
+### Fixed
+- Fixed `NumberMinimumValidator` and `NumberMaximumValidator`.
+- Added checks OAGenerator::isDefault where missed
+### Changed
+- `OpenApiConfiguration` replaced input configuration array with Generator
 
 ## [1.0.1] - 2023-01-31
 ### Fixed
