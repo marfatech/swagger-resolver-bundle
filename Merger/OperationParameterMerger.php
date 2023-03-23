@@ -50,7 +50,7 @@ class OperationParameterMerger
     public function merge(Operation $operation, OpenApiConfigurationInterface $apiConfiguration): Schema
     {
         $parameterList = Generator::isDefault($operation->parameters) ? [] : $operation->parameters;
-        $contentList = Generator::isDefault($operation->requestBody) ? [] : $operation->requestBody->content;
+        $contentList = (Generator::isDefault($operation->requestBody) || Generator::isDefault($operation->requestBody->content)) ? [] : $operation->requestBody->content;
 
         foreach ($parameterList as $parameter) {
             $extensionParameterList[ParameterExtensionEnum::X_PARAMETER_LOCATION] = $parameter->in;

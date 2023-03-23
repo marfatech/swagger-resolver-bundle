@@ -14,12 +14,13 @@ declare(strict_types=1);
 namespace Linkin\Bundle\SwaggerResolverBundle\Factory;
 
 use Exception;
+use Generator;
 use Linkin\Bundle\SwaggerResolverBundle\Configuration\OpenApiConfiguration;
 use Linkin\Bundle\SwaggerResolverBundle\Exception\LoadConfigurationFailedException;
 use Linkin\Bundle\SwaggerResolverBundle\Merger\OperationParameterMerger;
 use Nelmio\ApiDocBundle\ApiDocGenerator;
 use Nelmio\ApiDocBundle\NelmioApiDocBundle;
-use OpenApi\Generator;
+use OpenApi\Generator as OpenApiGenerator;
 use OpenApi\Serializer;
 use OpenApi\Util;
 use Psr\Container\ContainerExceptionInterface;
@@ -88,18 +89,8 @@ class OpenApiConfigurationFactory
      */
     private function createInstanceByNelmioApiDoc(): OpenApiConfiguration
     {
-        $apiDocGeneratorList = $this->nelmioApiDocAreaLocator->getProvidedServices();
-
-        $openApiList = [];
-
-        foreach ($apiDocGeneratorList as $area => $_) {
-            /** @var ApiDocGenerator $openApi */
-            $openApi = $this->nelmioApiDocAreaLocator->get($area);
-            $openApiList[$area] = $openApi->generate();
-        }
-
         return new OpenApiConfiguration(
-            $openApiList,
+            $this->getOpenApiGeneratorByNelmioApiDoc(),
             $this->router,
             $this->operationParameterMerger,
             $this->serializer,
@@ -107,21 +98,50 @@ class OpenApiConfigurationFactory
         );
     }
 
+    /**
+     * @throws ContainerExceptionInterface
+     */
+    private function getOpenApiGeneratorByNelmioApiDoc(): Generator
+    {
+        $apiDocGeneratorList = $this->nelmioApiDocAreaLocator->getProvidedServices();
+
+        foreach ($apiDocGeneratorList as $area => $_) {
+            /** @var ApiDocGenerator $openApi */
+            $openApi = $this->nelmioApiDocAreaLocator->get($area);
+            yield $area => $openApi->generate();
+        }
+    }
+
     private function createInstanceByOpenApiAnnotation(): OpenApiConfiguration
     {
-        $openApiList = [];
+        return new OpenApiConfiguration(
+            $this->getOpenApiGeneratorByOpenApiAnnotation(),
+            $this->router,
+            $this->operationParameterMerger,
+            $this->serializer,
+            $this->cache
+        );
+    }
 
+    private function getOpenApiGeneratorByOpenApiAnnotation(): Generator
+    {
         foreach ($this->oaAnnotationConfig as $area => $openapiAnnotation) {
             $scan = $openapiAnnotation['scan'];
             $exclude = $openapiAnnotation['exclude'];
 
             $finder = Util::finder($scan, $exclude);
 
-            $openApiList[$area] = Generator::scan($finder);
+            yield $area => OpenApiGenerator::scan($finder);
         }
+    }
 
+    /**
+     * @throws Exception
+     */
+    private function createInstanceBySerializedConfig(): OpenApiConfiguration
+    {
         return new OpenApiConfiguration(
-            $openApiList,
+            $this->getOpenApiGeneratorBySerializedConfig(),
             $this->router,
             $this->operationParameterMerger,
             $this->serializer,
@@ -132,22 +152,12 @@ class OpenApiConfigurationFactory
     /**
      * @throws Exception
      */
-    private function createInstanceBySerializedConfig(): OpenApiConfiguration
+    private function getOpenApiGeneratorBySerializedConfig(): Generator
     {
-        $openApiList = [];
-
         foreach ($this->oaFileConfig as $area => $openapiSerializedConfig) {
             $file = $openapiSerializedConfig['file'];
 
-            $openApiList[$area] = $this->serializer->deserializeFile($file);
+            yield $area => $this->serializer->deserializeFile($file);
         }
-
-        return new OpenApiConfiguration(
-            $openApiList,
-            $this->router,
-            $this->operationParameterMerger,
-            $this->serializer,
-            $this->cache
-        );
     }
 }

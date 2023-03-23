@@ -15,6 +15,7 @@ namespace Linkin\Bundle\SwaggerResolverBundle\Configuration;
 
 use ArrayIterator;
 use Exception;
+use Generator;
 use IteratorAggregate;
 use Linkin\Bundle\SwaggerResolverBundle\Exception\LoadConfigurationFailedException;
 use Linkin\Bundle\SwaggerResolverBundle\Exception\SchemaNotFoundException;
@@ -53,9 +54,14 @@ class OpenApiConfiguration implements IteratorAggregate, OpenApiConfigurationInt
     private ?array $schemaList = null;
 
     /**
-     * @var array<string, OpenApi>
+     * @var null|array<string, OpenApi>
      */
-    private array $openApiList;
+    private ?array $openApiList = null;
+
+    /**
+     * @var Generator<string, OpenApi> $openApiGenerator
+     */
+    private Generator $openApiGenerator;
 
     private RouterInterface $router;
     private OperationParameterMerger $operationParameterMerger;
@@ -63,16 +69,16 @@ class OpenApiConfiguration implements IteratorAggregate, OpenApiConfigurationInt
     private ?CacheInterface $cache;
 
     /**
-     * @param array<string, OpenApi> $openApiList
+     * @param Generator<string, OpenApi> $openApiGenerator
      */
     public function __construct(
-        array $openApiList,
+        Generator $openApiGenerator,
         RouterInterface $router,
         OperationParameterMerger $operationParameterMerger,
         Serializer $serializer,
         ?CacheInterface $cache = null
     ) {
-        $this->openApiList = $openApiList;
+        $this->openApiGenerator = $openApiGenerator;
         $this->router = $router;
         $this->operationParameterMerger = $operationParameterMerger;
         $this->serializer = $serializer;
@@ -86,7 +92,11 @@ class OpenApiConfiguration implements IteratorAggregate, OpenApiConfigurationInt
     {
         $schemaList = [];
 
-        foreach ($this->openApiList as $openApi) {
+        foreach ($this->getOpenApiList() as $openApi) {
+            if (OAGenerator::isDefault($openApi->components) || OAGenerator::isDefault($openApi->components->schemas)) {
+                continue;
+            }
+
             foreach ($openApi->components->schemas as $schema) {
                 $schemaList[$schema->schema] = $schema;
             }
@@ -243,7 +253,7 @@ class OpenApiConfiguration implements IteratorAggregate, OpenApiConfigurationInt
 
         $mergedSchemaList = [];
 
-        foreach ($this->openApiList as $openApi) {
+        foreach ($this->getOpenApiList() as $openApi) {
             foreach ($openApi->paths as $path) {
                 foreach (self::METHODS as $method) {
                     if (OAGenerator::isDefault($path->$method)) {
@@ -277,5 +287,20 @@ class OpenApiConfiguration implements IteratorAggregate, OpenApiConfigurationInt
         }
 
         return $this->mergedSchemaList = $mergedSchemaList;
+    }
+
+    /**
+     * @return array
+     */
+    private function getOpenApiList(): array
+    {
+        if ($this->openApiList === null) {
+            $this->openApiList = [];
+
+            foreach ($this->openApiGenerator as $key => $value) {
+                $this->openApiList[$key] = $value;
+            }
+        }
+        return $this->openApiList;
     }
 }

@@ -51,6 +51,7 @@ class NumberMinimumValidator implements OpenApiValidatorInterface
 
         $message = sprintf('Property "%s" value should be', $propertyName);
         $minimum = $property->minimum;
+        $this->exclusiveMinimum = false;
 
         if (!Generator::isDefault($property->exclusiveMinimum)) {
             $this->exclusiveMinimum = $property->exclusiveMinimum;
