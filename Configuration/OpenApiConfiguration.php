@@ -167,11 +167,11 @@ class OpenApiConfiguration implements IteratorAggregate, OpenApiConfigurationInt
         /** @var Route $route */
         foreach ($this->router->getRouteCollection() as $routeName => $route) {
             foreach ($route->getMethods() as $method) {
-                if (!isset($mergedRouteSchemaList[$method][$routeName])) {
+                if (!isset($mergedRouteSchemaList[$routeName][$method])) {
                     continue;
                 }
 
-                $this->getMergedSchema($method, $routeName);
+                $this->getMergedSchema($routeName, $method);
             }
         }
 
